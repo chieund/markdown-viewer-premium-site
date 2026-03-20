@@ -4,7 +4,7 @@
 
 A cross-platform Markdown viewer with Mermaid diagrams, Math/LaTeX rendering, syntax highlighting for 100+ languages, and a stunning glassmorphism UI. One shared core, deployed everywhere.
 
-🌐 **Website**: [markdown-viewer-premium-site](https://chieund.github.io/markdown-viewer-premium-site)
+🌐 **Website**: [markdown-viewer-premium-site](https://markdown-viewer-premium-site.vercel.app)
 
 ## Download
 
