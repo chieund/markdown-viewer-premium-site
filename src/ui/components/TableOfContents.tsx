@@ -243,7 +243,7 @@ export default function TableOfContents({ content, isRaw, onToggleRaw, container
             a.download = 'document.doc'
             a.click()
             success('Document exported successfully!')
-        } catch (err) {
+        } catch {
             error('Failed to export document')
         }
     }

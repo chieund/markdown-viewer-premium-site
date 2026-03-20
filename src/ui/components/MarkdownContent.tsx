@@ -31,7 +31,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
             setCopied(true)
             success('Code copied to clipboard!')
             setTimeout(() => setCopied(false), 2000)
-        } catch (err) {
+        } catch {
             error('Failed to copy code')
         }
     }
@@ -78,7 +78,7 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                 rehypePlugins={[rehypeSlug, rehypeKatex, rehypeRaw]}
                 components={{
                     a(props) {
-                        const { node, href, children, ref, ...rest } = props
+                        const { node: _node, href, children, ref: _ref, ...rest } = props
 
                         if (!href) return <a {...rest}>{children}</a>
 
@@ -127,8 +127,8 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                                         {children}
                                     </a>
                                 )
-                            } catch (e) {
-                                console.warn('Failed to resolve relative URL:', href, e)
+                            } catch {
+                                console.warn('Failed to resolve relative URL:', href)
                                 return <a href={href} {...rest}>{children}</a>
                             }
                         }
@@ -137,20 +137,20 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                         return <a href={href} {...rest}>{children}</a>
                     },
                     code(props) {
-                        const { children, className, node, ref, ...rest } = props
+                        const { children, className, node: _node, ref: _ref, ...rest } = props
                         const match = /language-(\w+)/.exec(className || '')
 
                         // FIX: react-markdown v10+ doesn't always set inline prop
                         // Instead, check if it's inside a <pre> tag (block code)
                         // Inline code: no parent <pre>, no language class
                         // Block code: has parent <pre> OR has language-xxx class
-                        const isBlockCode = match || (node && node.tagName === 'code' && node.position)
+                        const isBlockCode = match || (_node && _node.tagName === 'code' && _node.position)
 
                         // DEBUG: Log what we're receiving
                         console.log('🔍 Code render:', {
                             hasMatch: !!match,
                             className,
-                            hasNode: !!node,
+                            hasNode: !!_node,
                             preview: String(children).substring(0, 50),
                             willRenderAs: isBlockCode ? 'BLOCK' : 'INLINE'
                         })
@@ -182,7 +182,7 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                         // Otherwise, treat as block code (``` without language)
                         return <CodeBlock language="text" value={String(children).replace(/\n$/, '')} />
                     },
-                    img({ src, alt, node, ref, ...rest }) {
+                    img({ src, alt, node: _node, ref: _ref, ...rest }) {
                         if (!src) return <img {...rest} alt={alt} />
                         return (
                             <ImageLightbox src={src} alt={alt}>
@@ -198,6 +198,7 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                         try {
                             // children is often an array or a single React element (e.g. <p>)
                             const childrenArray = Array.isArray(children) ? children : [children];
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             const firstChild: any = childrenArray[0];
                             if (firstChild?.props?.children) {
                                 const innerChildren = Array.isArray(firstChild.props.children)
@@ -205,7 +206,7 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                                     : [firstChild.props.children];
                                 textContent = String(innerChildren[0] || '');
                             }
-                        } catch (e) {
+                        } catch {
                             // Fallback if parsing fails
                         }
 
@@ -246,13 +247,14 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                                     </div>
                                     <div className="alert-content" style={{ fontSize: '0.95rem', opacity: 0.9 }}>
                                         {/* CSS will hide the original [!TYPE] text via a small hack or we just render the raw children but skip the first text node. For simplicity, since the user usually provides a new line after the tag, we let it render but use CSS to hide the raw tag if possible, or gracefully accept it. Actually, we can just process the children here to slice it out! */}
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                         {React.Children.map(children, (child: any) => {
                                             if (child?.props?.children) {
                                                 const innerArr = Array.isArray(child.props.children) ? child.props.children : [child.props.children];
                                                 if (typeof innerArr[0] === 'string' && innerArr[0].startsWith(`[!${type}]`)) {
                                                     // Strip out the [!TYPE] tag
                                                     const newInner = [...innerArr];
-                                                    newInner[0] = newInner[0].replace(new RegExp(`^\\[!${type}\\]\\s*`, 'i'), '');
+                                                    newInner[0] = innerArr[0].replace(new RegExp(`^\\[!${type}\\]\\s*`, 'i'), '');
                                                     return React.cloneElement(child, { children: newInner });
                                                 }
                                             }
