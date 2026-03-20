@@ -4,7 +4,9 @@
 
 A cross-platform Markdown viewer with Mermaid diagrams, Math/LaTeX rendering, syntax highlighting for 100+ languages, and a stunning glassmorphism UI. One shared core, deployed everywhere.
 
-🌐 **Website**: [markdown-viewer-premium-site](https://markdown-viewer-premium-site.vercel.app)
+🌐 **Website**: [markdown-viewer-premium-site.vercel.app](https://markdown-viewer-premium-site.vercel.app)
+
+![Overview](public/screenshots/overview.png)
 
 ## Download
 
@@ -12,7 +14,29 @@ A cross-platform Markdown viewer with Mermaid diagrams, Math/LaTeX rendering, sy
 |----------|------|
 | 🌍 Chrome / Edge / Brave | [Chrome Web Store](https://chromewebstore.google.com/detail/markdown-viewer-premium/abnpdibfmmdcjhdakgjeiepimokkhjjo) |
 | 💻 VS Code | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=bumkom.markdown-viewer-premium) |
-| 🖥️ Desktop (Windows & Linux) | [GitHub Releases](https://github.com/chieund/markdown-viewer-premium-site/releases/tag/v1.0.2) |
+| 🖥️ Desktop (Windows, macOS & Linux) | [GitHub Releases](https://github.com/chieund/markdown-viewer-premium-site/releases/tag/v1.0.2) |
+
+## Screenshots
+
+### Syntax Highlighting (100+ Languages)
+
+![Code Blocks](public/screenshots/code-blocks.png)
+
+### Mermaid Diagrams
+
+![Flowchart](public/screenshots/mermaid-flowchart.png)
+
+![Sequence Diagram](public/screenshots/mermaid-sequence.png)
+
+![Pie Chart with Fullscreen Zoom](public/screenshots/mermaid-fullscreen.png)
+
+### Math & LaTeX
+
+![Math LaTeX](public/screenshots/math-latex.png)
+
+### Tables & Task Lists
+
+![Tables](public/screenshots/tables.png)
 
 ## Features
 
@@ -38,7 +62,7 @@ Automatically renders `.md` and `.markdown` files in the browser — works with 
 Replaces the default Markdown preview with a premium UI. Open any `.md` file and press `Ctrl+Shift+V` (or `Cmd+Shift+V` on Mac).
 
 ### Desktop App
-Native desktop application built with Tauri v2. Open and preview local Markdown files with drag & drop support.
+Native desktop application built with Tauri v2. Open and preview local Markdown files with drag & drop support. Auto-update on startup.
 
 ## Tech Stack
 
