@@ -205,7 +205,7 @@ function App() {
                 <p className="text-slate-500 text-sm">VS Code Marketplace</p>
               </a>
 
-              <a href="https://github.com/chieund/markdown-viewer-premium-site/releases" target="_blank" rel="noopener noreferrer"
+              <a href="https://github.com/chieund/markdown-viewer-premium-site/releases/tag/v1.0.2" target="_blank" rel="noopener noreferrer"
                 className="group p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] hover:border-cyan-500/20 transition-all duration-300 hover:-translate-y-1">
                 <svg className="w-10 h-10 mx-auto mb-4 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
                 <h3 className="text-lg font-bold mb-2">Desktop App</h3>

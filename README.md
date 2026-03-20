@@ -12,7 +12,7 @@ A cross-platform Markdown viewer with Mermaid diagrams, Math/LaTeX rendering, sy
 |----------|------|
 | 🌍 Chrome / Edge / Brave | [Chrome Web Store](https://chromewebstore.google.com/detail/markdown-viewer-premium/abnpdibfmmdcjhdakgjeiepimokkhjjo) |
 | 💻 VS Code | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=bumkom.markdown-viewer-premium) |
-| 🖥️ Desktop (Linux) | [GitHub Releases](https://github.com/chieund/markdown-viewer-premium-site/releases) |
+| 🖥️ Desktop (Windows & Linux) | [GitHub Releases](https://github.com/chieund/markdown-viewer-premium-site/releases/tag/v1.0.2) |
 
 ## Features
 
