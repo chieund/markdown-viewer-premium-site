@@ -1,81 +1,96 @@
+import { useEffect, useMemo, useRef } from 'react'
 import MermaidBlock from './MermaidBlock'
+import PlantUmlBlock from './PlantUmlBlock'
+import DotBlock from './DotBlock'
+import VegaBlock from './VegaBlock'
 import MathBlock from './MathBlock'
 import ImageLightbox from './ImageLightbox'
+import CodeBlock from './CodeBlock'
+import { PLANTUML_LANGUAGE_TAGS, DOT_LANGUAGE_TAGS, VEGA_LANGUAGE_TAGS } from '../utils/featureDisplay'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeSlug from 'rehype-slug'
 import rehypeKatex from 'rehype-katex'
 import rehypeRaw from 'rehype-raw'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { useState } from 'react'
 import React from 'react'
-import { useTheme } from '../hooks/useTheme'
-import { useToast } from '../hooks/useToast'
+import { convertBacklogToGfm } from '../utils/backlogConverter'
+import { convertJiraToGfm } from '../utils/jiraConverter'
+import { convertMermaidToGfm } from '../utils/mermaidConverter'
+import { convertPlantUmlToGfm } from '../utils/plantumlConverter'
+import { convertDotToGfm } from '../utils/dotConverter'
+import { convertVegaToGfm } from '../utils/vegaConverter'
+import rehypeLineNumbers from '../utils/rehypeLineNumbers'
+
+/** Recursively flattens rendered React children back to plain text — used to
+ * pull the original source text out of a raw HTML `<pre>` (whose children
+ * are already-rendered React nodes by the time the `pre` component sees
+ * them, not the markdown source string `code` gets). */
+function extractPlainText(node: React.ReactNode): string {
+    if (node == null || typeof node === 'boolean') return ''
+    if (typeof node === 'string' || typeof node === 'number') return String(node)
+    if (Array.isArray(node)) return node.map(extractPlainText).join('')
+    if (React.isValidElement(node)) {
+        const elementProps = node.props as { children?: React.ReactNode }
+        return extractPlainText(elementProps.children)
+    }
+    return ''
+}
 
 interface MarkdownContentProps {
     content: string
     currentUrl?: string
-}
-
-const CodeBlock = ({ language, value }: { language: string, value: string }) => {
-    const [copied, setCopied] = useState(false)
-    const { resolvedTheme } = useTheme()
-    const { success, error } = useToast()
-    const isDark = resolvedTheme === 'dark'
-
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(value)
-            setCopied(true)
-            success('Code copied to clipboard!')
-            setTimeout(() => setCopied(false), 2000)
-        } catch {
-            error('Failed to copy code')
-        }
-    }
-
-    return (
-        <div className="code-block-wrapper">
-            <div className="code-header">
-                <span className="lang-tag">{language}</span>
-                <button className="copy-btn" onClick={handleCopy}>
-                    {copied ? (
-                        <span className="flex-center">✓</span>
-                    ) : (
-                        'Copy'
-                    )}
-                </button>
-            </div>
-            <SyntaxHighlighter
-                style={isDark ? vscDarkPlus : oneLight}
-                language={language}
-                PreTag="div"
-                customStyle={{
-                    margin: 0,
-                    borderTopLeftRadius: 0,
-                    borderTopRightRadius: 0,
-                    backgroundColor: isDark ? '#1e1e1e' : '#fafafa',
-                    fontSize: '0.9rem',
-                    lineHeight: '1.3', // Tighter line height for ASCII art
-                    fontFamily: 'JetBrains Mono, Fira Code, monospace', // Better fonts for box drawing
-                    padding: '1.2rem 1.25rem'
-                }}
-            >
-                {value}
-            </SyntaxHighlighter>
-        </div>
-    )
+    /** Fires as each ```mermaid block finishes its first render pass — lets a
+     * host (e.g. the VS Code extension) show "Rendering N/total" feedback. */
+    onMermaidRenderProgress?: (completed: number, total: number) => void
 }
 
 export default function MarkdownContent(contentProps: MarkdownContentProps) {
-    const { content } = contentProps
+    const { content, currentUrl, onMermaidRenderProgress } = contentProps
+
+    let processedContent = content;
+    const ext = currentUrl ? currentUrl.split('.').pop()?.toLowerCase() : '';
+
+    if (ext === 'jira' || ext === 'confluence') {
+        processedContent = convertJiraToGfm(content);
+    } else if (ext === 'mmd' || ext === 'mermaid') {
+        processedContent = convertMermaidToGfm(content);
+    } else if (ext === 'puml' || ext === 'plantuml') {
+        processedContent = convertPlantUmlToGfm(content);
+    } else if (ext === 'dot' || ext === 'gv' || ext === 'graphviz') {
+        processedContent = convertDotToGfm(content);
+    } else if (ext === 'vg' || ext === 'vl') {
+        processedContent = convertVegaToGfm(content, ext === 'vl');
+    } else if (ext === 'backlog' || ext === 'bl' || ext === 'blg') {
+        processedContent = convertBacklogToGfm(content);
+    }
+
+    // Recomputed per content change; drives the completed/total counter below.
+    const mermaidTotal = useMemo(
+        () => (processedContent.match(/^```mermaid\b/gm) || []).length,
+        [processedContent]
+    )
+    const completedRef = useRef(0)
+    // New content → a fresh render pass, even if the block count is unchanged.
+    useEffect(() => {
+        completedRef.current = 0
+        onMermaidRenderProgress?.(0, mermaidTotal)
+        // onMermaidRenderProgress intentionally excluded: platforms pass a
+        // stable-enough callback, and including it would refire this on
+        // every parent re-render, not just on content changes.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [processedContent, mermaidTotal])
+    const handleMermaidRendered = () => {
+        if (!onMermaidRenderProgress) return
+        completedRef.current = Math.min(mermaidTotal, completedRef.current + 1)
+        onMermaidRenderProgress(completedRef.current, mermaidTotal)
+    }
+
     return (
         <div className="markdown-glass">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[rehypeSlug, rehypeKatex, rehypeRaw]}
+                rehypePlugins={[rehypeLineNumbers, rehypeSlug, rehypeKatex, rehypeRaw]}
                 components={{
                     a(props) {
                         const { node: _node, href, children, ref: _ref, ...rest } = props
@@ -138,25 +153,28 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                     },
                     code(props) {
                         const { children, className, node: _node, ref: _ref, ...rest } = props
-                        const match = /language-(\w+)/.exec(className || '')
+                        const match = /language-([\w-]+)/.exec(className || '')
 
                         // FIX: react-markdown v10+ doesn't always set inline prop
                         // Instead, check if it's inside a <pre> tag (block code)
                         // Inline code: no parent <pre>, no language class
                         // Block code: has parent <pre> OR has language-xxx class
-                        const isBlockCode = match || (_node && _node.tagName === 'code' && _node.position)
-
-                        // DEBUG: Log what we're receiving
-                        console.log('🔍 Code render:', {
-                            hasMatch: !!match,
-                            className,
-                            hasNode: !!_node,
-                            preview: String(children).substring(0, 50),
-                            willRenderAs: isBlockCode ? 'BLOCK' : 'INLINE'
-                        })
+                        // isBlockCode logic removed as it was unused and causing lint errors
 
                         if (match && match[1] === 'mermaid') {
-                            return <MermaidBlock chart={String(children).replace(/\n$/, '')} />
+                            return <MermaidBlock chart={String(children).replace(/\n$/, '')} onRendered={handleMermaidRendered} />
+                        }
+
+                        if (match && (PLANTUML_LANGUAGE_TAGS as readonly string[]).includes(match[1])) {
+                            return <PlantUmlBlock source={String(children).replace(/\n$/, '')} />
+                        }
+
+                        if (match && (DOT_LANGUAGE_TAGS as readonly string[]).includes(match[1])) {
+                            return <DotBlock source={String(children).replace(/\n$/, '')} />
+                        }
+
+                        if (match && (VEGA_LANGUAGE_TAGS as readonly string[]).includes(match[1])) {
+                            return <VegaBlock source={String(children).replace(/\n$/, '')} mode={match[1] === 'vl' || match[1] === 'vegalite' || match[1] === 'vega-lite' ? 'vega-lite' : 'vega'} />
                         }
 
                         if (match && match[1] === 'math') {
@@ -182,24 +200,58 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                         // Otherwise, treat as block code (``` without language)
                         return <CodeBlock language="text" value={String(children).replace(/\n$/, '')} />
                     },
+                    pre(props) {
+                        const { children, node } = props
+                        const firstChild = node?.children?.[0]
+                        const wrapsFencedCode = firstChild != null && 'tagName' in firstChild && firstChild.tagName === 'code'
+
+                        if (wrapsFencedCode) {
+                            // The `code` component above already substituted a fully
+                            // self-styled block (CodeBlock/MermaidBlock/PlantUmlBlock/
+                            // MathBlock) for every fenced code block — this <pre> is
+                            // just react-markdown's default wrapper around it and would
+                            // otherwise double-box it, so render it as a no-op.
+                            return <>{children}</>
+                        }
+
+                        // A <pre> the author wrote directly as raw HTML (e.g. GitHub's
+                        // common <details><pre>@startuml...</pre></details>
+                        // collapsible-example pattern) — route it through the same
+                        // CodeBlock used for fenced code so it gets real syntax
+                        // highlighting instead of rendering as unstyled plain text.
+                        return <CodeBlock language="text" value={extractPlainText(children).replace(/\n$/, '')} />
+                    },
                     img({ src, alt, node: _node, ref: _ref, ...rest }) {
                         if (!src) return <img {...rest} alt={alt} />
+
+                        // Resolve relative paths if currentUrl is provided
+                        let resolvedSrc = src;
+                        if (currentUrl && !src.startsWith('http') && !src.startsWith('data:') && !src.startsWith('blob:')) {
+                            try {
+                                resolvedSrc = new URL(src, currentUrl).href;
+                            } catch (e) {
+                                console.warn('Failed to resolve image URL:', src, e);
+                            }
+                        }
+
                         return (
-                            <ImageLightbox src={src} alt={alt}>
-                                <img src={src} alt={alt} {...rest} />
+                            <ImageLightbox src={resolvedSrc} alt={alt}>
+                                <img src={resolvedSrc} alt={alt} {...rest} />
                             </ImageLightbox>
                         )
                     },
                     blockquote(props) {
-                        const { children, ...rest } = props;
+                        const { children, node: _node, ...rest } = props;
 
                         // Extract text content to check for GitHub Alerts
                         let textContent = '';
                         try {
-                            // children is often an array or a single React element (e.g. <p>)
+                            // children is often an array or a single React element (e.g. <p>).
+                            // rehypeRaw inserts whitespace-only text nodes ("\n") around block
+                            // children, so skip those and grab the first actual element.
                             const childrenArray = Array.isArray(children) ? children : [children];
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const firstChild: any = childrenArray[0];
+                            const firstChild: any = childrenArray.find((c: unknown) => c !== null && typeof c === 'object' && 'props' in c);
                             if (firstChild?.props?.children) {
                                 const innerChildren = Array.isArray(firstChild.props.children)
                                     ? firstChild.props.children
@@ -254,7 +306,7 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                                                 if (typeof innerArr[0] === 'string' && innerArr[0].startsWith(`[!${type}]`)) {
                                                     // Strip out the [!TYPE] tag
                                                     const newInner = [...innerArr];
-                                                    newInner[0] = innerArr[0].replace(new RegExp(`^\\[!${type}\\]\\s*`, 'i'), '');
+                                                    newInner[0] = newInner[0].replace(new RegExp(`^\\[!${type}\\]\\s*`, 'i'), '');
                                                     return React.cloneElement(child, { children: newInner });
                                                 }
                                             }
@@ -270,7 +322,7 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                     }
                 }}
             >
-                {content}
+                {processedContent}
             </ReactMarkdown>
         </div>
     )

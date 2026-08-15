@@ -60,7 +60,7 @@
   /* VS Code Default Neutral Dark Mode */
   --bg-primary: #1e1e1e;
   --bg-secondary: #252526;
-  --bg-tertiary: #181818;
+  --bg-tertiary: #2d2d2d;
   --bg-code: #2d2d2d;
 
   --text-primary: #cccccc;
@@ -70,6 +70,10 @@
   --border-light: #333333;
   --border-medium: #444444;
   --border-dark: #555555;
+
+  --accent: #58a6ff;
+  --accent-light: #79c0ff;
+  --accent-hover: #388bfd;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
@@ -83,6 +87,65 @@
   --sidebar-text-secondary: #969696;
   --sidebar-text-active: #ffffff;
   --sidebar-hover: #2a2d2e;
+}
+
+/* Skins — layered on top of the light/dark base via [data-skin], set
+   alongside (not instead of) [data-theme]. Keeps every existing
+   [data-theme="dark"] rule (mermaid node colors, etc.) working unchanged
+   for skins that resolve to that base. */
+[data-skin="sepia"] {
+  --bg-primary: #f4ecd8;
+  --bg-secondary: #f4ecd8;
+  --bg-tertiary: #ece0c8;
+  --bg-code: #e8dcc0;
+
+  --text-primary: #5b4636;
+  --text-secondary: #7c6f5f;
+  --text-tertiary: #a08d6f;
+
+  --accent: #a0522d;
+  --accent-light: #c98a5e;
+  --accent-hover: #8b4513;
+
+  --border-light: #d8c9a3;
+  --border-medium: #c4b28a;
+  --border-dark: #a08d6f;
+
+  --sidebar-bg: #ece0c8;
+  --sidebar-bg-secondary: #f4ecd8;
+  --sidebar-border: #d8c9a3;
+  --sidebar-text-primary: #5b4636;
+  --sidebar-text-secondary: #7c6f5f;
+  --sidebar-text-active: #a0522d;
+  --sidebar-hover: #e8dcc0;
+}
+
+[data-skin="solarized"] {
+  /* Canonical Solarized Light (base3/base2 background, base01/base00 text). */
+  --bg-primary: #fdf6e3;
+  --bg-secondary: #fdf6e3;
+  --bg-tertiary: #eee8d5;
+  --bg-code: #eee8d5;
+
+  --text-primary: #586e75;
+  --text-secondary: #657b83;
+  --text-tertiary: #93a1a1;
+
+  --accent: #268bd2;
+  --accent-light: #2aa198;
+  --accent-hover: #1e6fa8;
+
+  --border-light: #eee8d5;
+  --border-medium: #d3cbb7;
+  --border-dark: #93a1a1;
+
+  --sidebar-bg: #eee8d5;
+  --sidebar-bg-secondary: #fdf6e3;
+  --sidebar-border: #d3cbb7;
+  --sidebar-text-primary: #586e75;
+  --sidebar-text-secondary: #657b83;
+  --sidebar-text-active: #268bd2;
+  --sidebar-hover: #e3dcc6;
 }
 
 body,
@@ -284,12 +347,6 @@ body,
   padding: 0;
   color: inherit;
   box-shadow: none;
-}
-
-.markdown-glass pre {
-  background: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
 }
 
 /* Code Blocks - Clean & Minimal */
@@ -676,7 +733,7 @@ body,
 .markdown-glass th {
   color: var(--text-primary);
   font-weight: 600;
-  background: var(--bg-tertiary);
+  background: var(--bg-code);
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -686,6 +743,9 @@ body,
   border-bottom: none;
 }
 
+.markdown-glass tr:nth-child(even) td {
+  background: var(--bg-tertiary);
+}
 /* Ensure App container fits */
 .w-full {
   width: 100%;
@@ -855,6 +915,57 @@ body,
   overflow: hidden;
 }
 
+.mermaid-source-modal {
+  position: relative;
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 12px;
+  width: min(720px, 90vw);
+  max-height: 80vh;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  /* No overflow:hidden here — .mermaid-source-close floats partially
+     outside this box (top/right: -14px) to sit over the corner; clipping
+     it along with the content made the top-right sliver of the button
+     unclickable (elementFromPoint resolved to the overlay behind it).
+     The rounded-corner clip instead lives on .mermaid-source-scroll below,
+     which is the actual scrolling/overflowing content. */
+}
+
+.mermaid-source-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-primary, #fff);
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.mermaid-source-close:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.mermaid-source-scroll {
+  overflow: auto;
+  border-radius: 12px;
+}
+
+.mermaid-source-scroll .code-block-wrapper {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .mermaid-transform-wrapper {
   width: 100vw !important;
   height: 100vh !important;
@@ -906,6 +1017,25 @@ body,
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* ── Flowing dot along each Mermaid edge ──
+   CSS-only alternative to the React Flow rewrite: keeps Mermaid's own
+   parser/layout, and moves a dot along each edge's own path via CSS motion
+   path (offset-path/offset-distance) so it reads as "flowing" without
+   animating stroke-dashoffset, which repaints every path every frame and
+   stutters once there are many edges. Dots are injected in MermaidBlock.tsx. */
+@keyframes mermaid-flow-dot {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
+}
+
+.mermaid-flow-dot {
+  offset-rotate: 0deg;
+  animation-name: mermaid-flow-dot;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  pointer-events: none;
 }
 
 /* SVG - Force it to fill the available space (Fit Screen) */
@@ -1012,152 +1142,6 @@ body,
 
 /* Red-300 */
 
-/* Legacy styles removed to prevent conflicts */
-
-@media print {
-
-  /* Hide non-content elements */
-  .sidebar-toc,
-  .mermaid-controls,
-  .mermaid-modal-overlay,
-  .outline-overlay,
-  .outline-panel,
-  button,
-  .fixed {
-    display: none !important;
-  }
-
-  /* Reset layout for print */
-  body,
-  #root,
-  .viewer-layout,
-  .main-content {
-    height: auto !important;
-    overflow: visible !important;
-    background: white !important;
-    color: black !important;
-  }
-
-  /* Adjust typography for print */
-  .markdown-glass {
-    background: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: black !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* Force white background */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Ensure text is readable */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  p,
-  ul,
-  ol,
-  li,
-  blockquote {
-    color: black !important;
-  }
-
-  /* Improve code block readability in print */
-  pre,
-  code {
-    background: #f5f5f5 !important;
-    color: #333 !important;
-    border: 1px solid #ddd !important;
-    white-space: pre-wrap !important;
-    word-break: break-all !important;
-  }
-}
-
-@media print {
-  @page {
-    margin: 2cm;
-  }
-
-  body {
-    background: white !important;
-    color: black !important;
-  }
-
-  /* Hide sidebar and all controls */
-  .fixed.inset-0>div:nth-child(5),
-  /* Sidebar container - approximate selector */
-  button,
-  .sticky,
-  .toast-container,
-  .back-to-top-btn,
-  .keyboard-shortcuts-help,
-  nav,
-  aside {
-    display: none !important;
-  }
-
-  /* Ensure main content is visible and takes full width */
-  .scroll-container,
-  .viewer-layout,
-  .main-content,
-  .markdown-glass {
-    position: static !important;
-    overflow: visible !important;
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    max-width: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-
-  /* Reset text colors */
-  .markdown-glass,
-  .markdown-glass p,
-  .markdown-glass h1,
-  .markdown-glass h2,
-  .markdown-glass h3,
-  .markdown-glass h4,
-  .markdown-glass h5,
-  .markdown-glass h6,
-  .markdown-glass li,
-  .markdown-glass span {
-    color: black !important;
-    text-shadow: none !important;
-  }
-
-  /* Preserve code block styling but ensure contrast */
-  .markdown-glass pre,
-  .markdown-glass code {
-    background: #f5f5f5 !important;
-    color: black !important;
-    border: 1px solid #ddd !important;
-    box-shadow: none !important;
-    white-space: pre-wrap !important;
-    /* Wrap long lines in print */
-    word-break: break-word !important;
-  }
-
-  /* Links */
-  .markdown-glass a {
-    text-decoration: underline !important;
-    color: #2563eb !important;
-  }
-
-  /* Expand all details/summary */
-  details[open] {
-    display: block !important;
-  }
-}
 
 /* Outline Panel Styles */
 .outline-overlay {
@@ -1511,6 +1495,122 @@ kbd {
   flex-direction: column;
   gap: 12px;
   pointer-events: none;
+}
+
+/* ==========================================
+   SEARCH PANEL (find-in-content, Ctrl/Cmd+F)
+   ========================================== */
+.search-panel {
+  position: fixed;
+  top: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  min-width: 280px;
+}
+
+.search-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-panel-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 13px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+}
+
+.search-panel-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.search-panel-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 40px;
+  text-align: center;
+}
+
+.search-panel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.search-panel-btn:hover {
+  background: var(--sidebar-hover);
+  color: var(--text-primary);
+}
+
+.search-panel-close {
+  color: #ef4444;
+}
+
+.search-panel-close:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .search-panel-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.search-panel-options {
+  display: flex;
+  gap: 12px;
+  padding-left: 2px;
+}
+
+.search-panel-options label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.search-panel-options input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+}
+
+mark.search-highlight {
+  background: rgba(250, 204, 21, 0.5);
+  color: inherit;
+  border-radius: 2px;
+}
+
+mark.search-highlight-current {
+  background: #f59e0b;
+  color: #000;
 }
 
 .toast {
@@ -2152,6 +2252,9 @@ kbd {
   }
 }
 
+/* ==========================================
+   PRINT / PDF EXPORT
+   ========================================== */
 @media print {
   @page {
     margin: 2cm;
@@ -2161,65 +2264,76 @@ kbd {
   html,
   body {
     height: auto !important;
-    min-height: auto !important;
     overflow: visible !important;
     background: white !important;
     color: black !important;
     margin: 0 !important;
     padding: 0 !important;
-    width: auto !important;
   }
 
-  /* Hide sidebar and all controls */
+  /* Hide all UI controls */
   .fixed,
   .sticky,
   .toast-container,
   .back-to-top-btn,
-  .keyboard-shortcuts-help,
+  .back-to-top-wrapper,
+  .scroll-progress-container,
+  .shrink-0,
+  [class*="sidebar"],
   nav,
   aside,
   button,
-  .icon-btn,
-  header {
+  header,
+  .icon-btn {
     display: none !important;
   }
 
-  /* Ensure main content is visible */
+  /* Show only content */
   #root,
+  #root > *,
   .scroll-container,
+  .scroll-container > *,
   .viewer-layout,
   .main-content,
   .markdown-glass {
     display: block !important;
-    position: relative !important;
+    position: static !important;
     overflow: visible !important;
     width: 100% !important;
     height: auto !important;
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: transparent !important;
+    background: white !important;
     box-shadow: none !important;
     border: none !important;
     transform: none !important;
   }
 
-  /* Specific override for sidebar container if identified by class */
-  .shrink-0 {
-    display: none !important;
-  }
-
-  /* Reset text colors */
+  /* Force all text to black */
   .markdown-glass,
-  .markdown-glass * {
+  .markdown-glass *:not(svg *):not(.mermaid *):not(.code-block-wrapper *),
+  h1, h2, h3, h4, h5, h6,
+  p, ul, ol, li, span, blockquote, td, th {
     color: black !important;
     text-shadow: none !important;
     background-color: transparent !important;
   }
 
-  /* Preserve code block styling but ensure contrast */
+  /* Sticky H1 reset */
+  .markdown-glass h1:first-of-type {
+    position: static !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 20px 0 !important;
+  }
+
+  /* Code blocks: light gray background */
   .markdown-glass pre,
-  .markdown-glass code {
+  .markdown-glass code,
+  .code-block-wrapper,
+  .code-header,
+  .code-block-wrapper * {
     background: #f5f5f5 !important;
     color: black !important;
     border: 1px solid #ddd !important;
@@ -2228,14 +2342,444 @@ kbd {
     word-break: break-word !important;
   }
 
-  /* Links */
-  .markdown-glass a {
-    text-decoration: underline !important;
-    color: #2563eb !important;
+  /* Syntax highlighter override */
+  .markdown-glass pre span,
+  .markdown-glass code span {
+    color: black !important;
+    background: transparent !important;
   }
 
-  /* Expand all details/summary */
-  details[open] {
-    display: block !important;
+  /* Tables */
+  .markdown-glass table,
+  .markdown-glass th,
+  .markdown-glass td {
+    border-color: #ccc !important;
   }
+
+  .markdown-glass th {
+    background: #f0f0f0 !important;
+  }
+
+  /* Links */
+  .markdown-glass a {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+  }
+
+  /* Images */
+  .markdown-glass img {
+    max-width: 100% !important;
+    box-shadow: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* ==========================================
+   REACT FLOW MERMAID DIAGRAMS
+   ========================================== */
+
+/* Wrapper */
+.mermaid-rf-wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 300px;
+}
+
+.mermaid-rf-modal-wrapper {
+  position: relative;
+  width: 80vw;
+  height: 70vh;
+  margin: auto;
+}
+
+.mermaid-rf-modal-close {
+  position: absolute;
+  top: -48px;
+  right: 0;
+  z-index: 50;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-secondary);
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.2s ease;
+}
+
+.mermaid-rf-modal-close:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .mermaid-rf-modal-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* ── Animated Edge ── */
+@keyframes dashdraw {
+  0% {
+    stroke-dashoffset: 30;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* BaseEdge puts the className straight on the <path> itself (there's no
+   wrapping element around it), so these must match the path directly —
+   not as a "find a descendant path" selector, which would never match.
+   No stroke-dashoffset animation here (same reason as the Classic SVG
+   view): the "flowing" motion instead comes from a .mermaid-flow-dot
+   circle rendered by the edge component, animated via offset-path. */
+.mermaid-rf-edge {
+  fill: none;
+  transition: stroke 0.2s;
+}
+
+.mermaid-rf-edge.mermaid-rf-edge--solid {
+  stroke: #3b82f6;
+  stroke-width: 1.5px;
+}
+
+.mermaid-rf-edge.mermaid-rf-edge--dashed {
+  stroke-dasharray: 10 5;
+  stroke: #8b5cf6;
+  stroke-width: 1.5px;
+}
+
+.mermaid-rf-edge.mermaid-rf-edge--thick {
+  stroke: #10b981;
+  stroke-width: 3px;
+}
+
+/* Dark theme edges */
+[data-theme="dark"] .mermaid-rf-edge.mermaid-rf-edge--solid { stroke: #60a5fa; }
+[data-theme="dark"] .mermaid-rf-edge.mermaid-rf-edge--dashed { stroke: #a78bfa; }
+[data-theme="dark"] .mermaid-rf-edge.mermaid-rf-edge--thick  { stroke: #34d399; }
+
+/* ── Edge Labels ── */
+.mermaid-rf-edge-label {
+  position: absolute;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Custom Nodes ── */
+.mermaid-rf-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  max-width: 200px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  cursor: default;
+  transition: box-shadow 0.2s, transform 0.15s;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #0f172a);
+  border: 1.5px solid var(--border-light, #cbd5e1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.mermaid-rf-node:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+  border-color: #3b82f6;
+}
+
+.mermaid-rf-node--selected {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Shapes */
+.mermaid-rf-node--rectangle {
+  border-radius: 6px;
+}
+
+.mermaid-rf-node--rounded {
+  border-radius: 9999px;
+  padding: 10px 20px;
+}
+
+.mermaid-rf-node--stadium {
+  border-radius: 9999px;
+  padding: 10px 20px;
+  background: #f0f9ff;
+  border-color: #38bdf8;
+}
+
+/* Drawn with an SVG polygon (see MermaidNode) rather than a rotated square:
+   rotating a rectangle 45deg makes its bounding footprint balloon for any
+   label longer than a couple of characters, and forces the label itself
+   to be counter-rotated to stay upright. A polygon stretched to fill the
+   box scales with the text instead and needs no counter-rotation. */
+/* !important: .mermaid-rf-node--selected sets its own border/box-shadow with
+   !important too, and (being declared earlier) would otherwise win the tie
+   and redraw a rectangular card outline around the diamond when selected. */
+.mermaid-rf-node--diamond {
+  position: relative;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 20px 44px;
+  min-width: 140px;
+}
+
+.mermaid-rf-diamond-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.mermaid-rf-diamond-bg polygon {
+  fill: #faf5ff;
+  stroke: #a855f7;
+  stroke-width: 1.5;
+}
+
+[data-theme="dark"] .mermaid-rf-diamond-bg polygon {
+  fill: #1e0f3d;
+  stroke: #a855f7;
+}
+
+.mermaid-rf-node--circle {
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  padding: 8px;
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.mermaid-rf-node--asymmetric {
+  border-radius: 6px 20px 6px 6px;
+  background: #fff7ed;
+  border-color: #f97316;
+}
+
+/* classDiagram — UML-style box: underlined name header, left-aligned members */
+.mermaid-rf-node--classBox {
+  border-radius: 4px;
+  max-width: 260px;
+  padding: 0;
+  text-align: left;
+  display: block;
+}
+
+.mermaid-rf-classbox {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.mermaid-rf-classbox-header {
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 12px;
+  border-bottom: 1.5px solid var(--border-light, #cbd5e1);
+}
+
+.mermaid-rf-classbox-member {
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* stateDiagram [*] pseudostates — small filled/ringed dot, no label text */
+.mermaid-rf-node--stateStart,
+.mermaid-rf-node--stateEnd {
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0;
+  background: #0f172a;
+  border-color: #0f172a;
+}
+
+.mermaid-rf-node--stateEnd {
+  background: transparent;
+  border: 6px solid #0f172a;
+}
+
+[data-theme="dark"] .mermaid-rf-node--stateStart {
+  background: #f1f5f9;
+  border-color: #f1f5f9;
+}
+
+[data-theme="dark"] .mermaid-rf-node--stateEnd {
+  border-color: #f1f5f9;
+}
+
+/* Dark theme nodes */
+[data-theme="dark"] .mermaid-rf-node {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: #334155;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .mermaid-rf-node--stadium {
+  background: #0c2a3d;
+  border-color: #0ea5e9;
+}
+
+[data-theme="dark"] .mermaid-rf-node--circle {
+  background: #052e16;
+  border-color: #22c55e;
+}
+
+[data-theme="dark"] .mermaid-rf-node--asymmetric {
+  background: #1f1008;
+  border-color: #f97316;
+}
+
+/* ── Sequence diagram (Flow mode) ── */
+.mermaid-seq-actor {
+  min-width: 120px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #0f172a);
+  border: 1.5px solid var(--border-light, #cbd5e1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.mermaid-seq-lifeline {
+  width: 0;
+  border-left: 1.5px dashed var(--border-light, #94a3b8);
+}
+
+.mermaid-seq-anchor {
+  width: 1px;
+  height: 1px;
+}
+
+.mermaid-seq-note {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  background: #fef9c3;
+  border: 1px solid #eab308;
+  color: #713f12;
+}
+
+[data-theme="dark"] .mermaid-seq-actor {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .mermaid-seq-note {
+  background: #3f2f0a;
+  border-color: #b45309;
+  color: #fde68a;
+}
+
+.mermaid-seq-activation {
+  width: 14px;
+  border-radius: 2px;
+  background: #93c5fd;
+  border: 1px solid #3b82f6;
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .mermaid-seq-activation {
+  background: #1d4ed8;
+  border-color: #60a5fa;
+}
+
+.mermaid-rf-subgraph {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  border: 1.5px dashed var(--border-light, #94a3b8);
+  background: color-mix(in srgb, var(--bg-tertiary, #f1f5f9) 70%, transparent);
+  pointer-events: none;
+}
+
+.mermaid-rf-subgraph-title {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary, #64748b);
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .mermaid-rf-subgraph {
+  border-color: #475569;
+  background: rgba(30, 41, 59, 0.45);
+}
+
+[data-theme="dark"] .mermaid-rf-subgraph-title {
+  color: #94a3b8;
+}
+
+.mermaid-rf-edge--dotted {
+  stroke-dasharray: 2 4 !important;
+}
+
+.mermaid-rf-fallback-hint {
+  padding: 1rem;
+  font-size: 12px;
+  color: var(--text-secondary, #64748b);
+  text-align: center;
+}
+
+/* ── React Flow panel overrides ── */
+.react-flow__controls {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-light, #e2e8f0);
+}
+
+.react-flow__controls-button {
+  background: var(--bg-primary, #fff);
+  color: var(--text-secondary, #64748b);
+  border-bottom: 1px solid var(--border-light, #e2e8f0);
+  transition: background 0.2s;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-primary, #0f172a);
+}
+
+.react-flow__background {
+  opacity: 0.4;
 }

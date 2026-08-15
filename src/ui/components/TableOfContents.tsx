@@ -1,7 +1,13 @@
 import { useEffect, useState, useMemo, useRef, type RefObject } from 'react'
 import GithubSlugger from 'github-slugger'
 import { ThemeToggle } from './ThemeToggle'
+import { LanguageToggle } from './LanguageToggle'
 import { useToast } from '../hooks/useToast'
+import { exportMarkdownToDocx } from '../utils/exportDocx'
+import { exportMarkdownToHtml } from '../utils/exportHtml'
+import { exportMarkdownToPdf } from '../utils/exportPdf'
+import { saveBlobAsFile } from '../utils/saveBlobAsFile'
+import { useI18n } from '../i18n/useI18n'
 
 interface OutlineItem {
     id: string
@@ -70,12 +76,13 @@ function TreeNode({ item, searchTerm, onHeadingClick, activeId }: { item: Outlin
 }
 
 export default function TableOfContents({ content, isRaw, onToggleRaw, containerRef, onShowShortcuts }: OutlineProps) {
+    const { t } = useI18n()
     const [searchTerm, setSearchTerm] = useState('')
     const [activeId, setActiveId] = useState<string>('')
     const { success, error } = useToast()
 
     const outlineTree = useMemo(() => {
-        const lines = content.split('\n')
+        const lines = content.split(/\r?\n/)
         const stack: OutlineItem[] = []
         const slugger = new GithubSlugger()
 
@@ -223,28 +230,69 @@ export default function TableOfContents({ content, isRaw, onToggleRaw, container
     if (!content) return null
 
     // Export Logic
-    const handlePrint = () => {
-        window.print()
-        success('Opening print dialog...')
-    }
+    const handlePrint = async () => {
+        // Inside a real VS Code webview, window.print() is silently ignored:
+        // the webview's outer iframe is sandboxed without `allow-modals`, a
+        // platform restriction the extension has no way to lift from its own
+        // HTML. Chrome extension / desktop app / plain browser contexts
+        // don't have this restriction and get the nicer native print dialog
+        // (which also respects the existing @media print stylesheet), so
+        // only VS Code needs the client-generated-PDF fallback.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const isVSCodeWebview = typeof (window as any).acquireVsCodeApi === 'function'
+        if (!isVSCodeWebview) {
+            window.print()
+            success('Opening print dialog...')
+            return
+        }
 
-    const handleExportDOC = () => {
         try {
-            const contentEl = document.querySelector('.markdown-glass')
+            const contentEl = document.querySelector<HTMLElement>('.markdown-glass')
             if (!contentEl) {
                 error('Content not found')
                 return
             }
-            const preHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset="utf-8"><title>Export Document</title><style>body { font-family: 'Times New Roman', serif; font-size: 11pt; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #999; padding: 5px; } img { max-width: 100%; }</style></head><body>`
-            const postHtml = `</body></html>`
-            const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(preHtml + contentEl.innerHTML + postHtml)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = 'document.doc'
-            a.click()
-            success('Document exported successfully!')
+            const blob = await exportMarkdownToPdf(contentEl)
+            const saved = await saveBlobAsFile(blob, { filename: 'document.pdf', tauriFilter: { name: 'PDF Document', extensions: ['pdf'] } })
+            if (saved) success('PDF exported successfully!')
+        } catch {
+            error('Failed to export PDF')
+        }
+    }
+
+    const handleExportDOC = async () => {
+        try {
+            const contentEl = document.querySelector<HTMLElement>('.markdown-glass')
+            if (!contentEl) {
+                error('Content not found')
+                return
+            }
+
+            // Real OOXML .docx (not an HTML file wearing a .doc extension) —
+            // walks the already-rendered DOM; see exportDocx.ts for scope.
+            const blob = await exportMarkdownToDocx(contentEl)
+            const saved = await saveBlobAsFile(blob, { filename: 'document.docx', tauriFilter: { name: 'Word Document', extensions: ['docx'] } })
+            if (saved) success('Document exported successfully!')
         } catch {
             error('Failed to export document')
+        }
+    }
+
+    const handleExportHtml = async () => {
+        try {
+            const contentEl = document.querySelector<HTMLElement>('.markdown-glass')
+            if (!contentEl) {
+                error('Content not found')
+                return
+            }
+
+            // Self-contained standalone .html — see exportHtml.ts for scope
+            // (same styling/theme as the live preview, images/diagrams inlined).
+            const blob = await exportMarkdownToHtml(contentEl)
+            const saved = await saveBlobAsFile(blob, { filename: 'document.html', tauriFilter: { name: 'HTML Document', extensions: ['html'] } })
+            if (saved) success('HTML exported successfully!')
+        } catch {
+            error('Failed to export HTML')
         }
     }
 
@@ -255,29 +303,36 @@ export default function TableOfContents({ content, isRaw, onToggleRaw, container
                 <div className="p-4 space-y-4">
                     {/* Top Row: Title + Actions */}
                     <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--sidebar-text-secondary)]">Outline</h3>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--sidebar-text-secondary)]">{t('outline')}</h3>
 
                         <div className="flex items-center gap-1">
                             <ThemeToggle />
+                            <LanguageToggle />
 
                             <div className="w-px h-4 bg-[var(--border-light)] mx-1" />
 
-                            <button onClick={onToggleRaw} className="icon-btn" title={isRaw ? "Preview" : "Raw Source"}>
+                            <button onClick={onToggleRaw} className="icon-btn" title={isRaw ? t('preview') : t('rawSource')}>
                                 {isRaw ? (
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
                                 ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                                    // Same "</>" glyph MermaidBlock uses for "View source" — keeps one
+                                    // consistent icon language for "raw/source text" across the app,
+                                    // and avoids reusing the Word-export document icon below.
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
                                 )}
                             </button>
-                            <button onClick={handlePrint} className="icon-btn" title="Print / PDF">
+                            <button onClick={handlePrint} className="icon-btn" title={t('exportPdf')}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 14h12v8H6z" /></svg>
                             </button>
-                            <button onClick={handleExportDOC} className="icon-btn" title="Export Word">
+                            <button onClick={handleExportDOC} className="icon-btn" title={t('exportWord')}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                            </button>
+                            <button onClick={handleExportHtml} className="icon-btn" title={t('exportHtml')}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><path d="m9 15-1.5 1.5L9 18" /><path d="m15 15 1.5 1.5L15 18" /></svg>
                             </button>
 
                             {onShowShortcuts && (
-                                <button onClick={onShowShortcuts} className="icon-btn" title="Keyboard Shortcuts">
+                                <button onClick={onShowShortcuts} className="icon-btn" title={t('keyboardShortcuts')}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <rect x="2" y="4" width="20" height="16" rx="2" />
                                         <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
@@ -296,7 +351,7 @@ export default function TableOfContents({ content, isRaw, onToggleRaw, container
                         <input
                             id="outline-search-input"
                             type="text"
-                            placeholder="Filter..."
+                            placeholder={t('filterPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-9 pr-8 py-2 text-sm bg-[var(--sidebar-bg-secondary)] border border-[var(--sidebar-border)] rounded-md focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none transition-all placeholder-[var(--sidebar-text-secondary)] text-[var(--sidebar-text-primary)]"
@@ -319,7 +374,7 @@ export default function TableOfContents({ content, isRaw, onToggleRaw, container
             >
                 {filteredOutline.length === 0 ? (
                     <div className="text-sm text-[var(--text-tertiary)] italic py-4 text-center">
-                        No sections found
+                        {t('noSectionsFound')}
                     </div>
                 ) : (
                     <div className="pb-10 space-y-0.5">

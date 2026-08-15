@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useI18n } from '../i18n/useI18n'
+import type { TranslationKey } from '../i18n/locales'
 
 interface ShortcutItem {
     keys: string[]
-    description: string
-    category: string
+    descriptionKey: TranslationKey
+    categoryKey: TranslationKey
 }
 
 interface KeyboardShortcutsHelpProps {
@@ -13,16 +15,18 @@ interface KeyboardShortcutsHelpProps {
 }
 
 const shortcuts: ShortcutItem[] = [
-    { keys: ['Ctrl', 'K'], description: 'Toggle Table of Contents', category: 'Navigation' },
-    { keys: ['Ctrl', 'D'], description: 'Toggle Theme', category: 'Appearance' },
-    { keys: ['Ctrl', 'P'], description: 'Print / Export PDF', category: 'Actions' },
-    { keys: ['Ctrl', '/'], description: 'Show Keyboard Shortcuts', category: 'Help' },
-    { keys: ['Home'], description: 'Scroll to Top', category: 'Navigation' },
-    { keys: ['End'], description: 'Scroll to Bottom', category: 'Navigation' },
-    { keys: ['Escape'], description: 'Close Modal / Menu', category: 'General' },
+    { keys: ['Ctrl', 'K'], descriptionKey: 'shortcutToggleToc', categoryKey: 'categoryNavigation' },
+    { keys: ['Ctrl', 'F'], descriptionKey: 'shortcutFind', categoryKey: 'categoryNavigation' },
+    { keys: ['Ctrl', 'D'], descriptionKey: 'shortcutToggleTheme', categoryKey: 'categoryAppearance' },
+    { keys: ['Ctrl', 'P'], descriptionKey: 'shortcutPrint', categoryKey: 'categoryActions' },
+    { keys: ['Ctrl', '/'], descriptionKey: 'shortcutShowShortcuts', categoryKey: 'categoryHelp' },
+    { keys: ['Home'], descriptionKey: 'shortcutScrollTop', categoryKey: 'categoryNavigation' },
+    { keys: ['End'], descriptionKey: 'shortcutScrollBottom', categoryKey: 'categoryNavigation' },
+    { keys: ['Escape'], descriptionKey: 'shortcutCloseModal', categoryKey: 'categoryGeneral' },
 ]
 
 export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
+    const { t } = useI18n()
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'
@@ -44,13 +48,13 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
     if (!isOpen) return null
 
     // Group shortcuts by category
-    const categories = Array.from(new Set(shortcuts.map(s => s.category)))
+    const categoryKeys = Array.from(new Set(shortcuts.map(s => s.categoryKey)))
 
     return createPortal(
         <div className="shortcuts-overlay" onClick={onClose}>
             <div className="shortcuts-modal" onClick={e => e.stopPropagation()}>
                 <div className="shortcuts-header">
-                    <h2>Keyboard Shortcuts</h2>
+                    <h2>{t('shortcutsTitle')}</h2>
                     <button onClick={onClose} className="shortcuts-close" aria-label="Close">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18" />
@@ -58,14 +62,14 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
                         </svg>
                     </button>
                 </div>
-                
+
                 <div className="shortcuts-content">
-                    {categories.map(category => (
-                        <div key={category} className="shortcuts-category">
-                            <h3 className="shortcuts-category-title">{category}</h3>
+                    {categoryKeys.map(categoryKey => (
+                        <div key={categoryKey} className="shortcuts-category">
+                            <h3 className="shortcuts-category-title">{t(categoryKey)}</h3>
                             <div className="shortcuts-list">
                                 {shortcuts
-                                    .filter(s => s.category === category)
+                                    .filter(s => s.categoryKey === categoryKey)
                                     .map((shortcut, index) => (
                                         <div key={index} className="shortcut-item">
                                             <div className="shortcut-keys">
@@ -76,7 +80,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
                                                     </span>
                                                 ))}
                                             </div>
-                                            <span className="shortcut-description">{shortcut.description}</span>
+                                            <span className="shortcut-description">{t(shortcut.descriptionKey)}</span>
                                         </div>
                                     ))}
                             </div>

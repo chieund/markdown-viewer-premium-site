@@ -22,3 +22,7 @@ export { ThemeProvider } from './context/ThemeContext';
 export { useToast } from './hooks/useToast';
 export { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 export { useTheme } from './hooks/useTheme';
+
+// i18n
+export { useI18n } from './i18n/useI18n';
+export type { Locale } from './i18n/locales';
