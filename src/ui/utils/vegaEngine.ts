@@ -17,7 +17,7 @@ export async function renderVega(spec: string, mode: VegaMode): Promise<string> 
     try {
         parsedSpec = JSON.parse(spec)
     } catch (e) {
-        throw new Error(`Invalid JSON in ${mode} specification: ${(e as Error).message}`)
+        throw new Error(`Invalid JSON in ${mode} specification: ${(e as Error).message}`, { cause: e })
     }
 
     // Create temporary container
