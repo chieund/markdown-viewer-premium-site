@@ -1,5 +1,6 @@
 import { BlockMath, InlineMath } from 'react-katex'
 import { useState } from 'react'
+import { useT } from '../i18n/useT'
 
 interface MathBlockProps {
     formula: string
@@ -7,6 +8,7 @@ interface MathBlockProps {
 }
 
 export default function MathBlock({ formula, inline = false }: MathBlockProps) {
+    const t = useT()
     const [error, setError] = useState<string | null>(null)
 
     const handleError = () => {
@@ -42,7 +44,7 @@ export default function MathBlock({ formula, inline = false }: MathBlockProps) {
                 <button
                     onClick={handleCopy}
                     className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-                    title="Copy LaTeX"
+                    title={t('copyLatex')}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>

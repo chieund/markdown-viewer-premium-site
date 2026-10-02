@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- an import can't pull in an ambient .d.ts for consumers' tsc (see vendor-modules.d.ts)
+/// <reference path="../vendor-modules.d.ts" />
 /**
  * Builds a real PDF (not a rasterized screenshot of the whole page) from the
  * already-rendered `.markdown-glass` DOM, using pdfmake — entirely
@@ -33,10 +35,8 @@ async function loadPdfMake(): Promise<PdfContent> {
             const [pdfMakeMod, helveticaMod, courierMod] = await Promise.all([
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 import('pdfmake/build/pdfmake.js') as Promise<any>,
-                // @ts-expect-error -- pdfmake ships no declaration file for this subpath (only the package root resolves via @types/pdfmake)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 import('pdfmake/build/standard-fonts/Helvetica.js') as Promise<any>,
-                // @ts-expect-error -- pdfmake ships no declaration file for this subpath (only the package root resolves via @types/pdfmake)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 import('pdfmake/build/standard-fonts/Courier.js') as Promise<any>,
             ])

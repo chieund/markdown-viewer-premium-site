@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import type { ToastType } from '../components/Toast'
 
 export interface ToastState {
@@ -8,18 +8,42 @@ export interface ToastState {
     duration?: number
 }
 
+// One store for the whole page. Each useToast() used to keep its own
+// useState list, but only MarkdownViewer renders a ToastContainer — so every
+// toast raised elsewhere (export results, "Code copied", diagram copy
+// errors) went into a list nobody displayed and was never seen.
+let toasts: ToastState[] = []
 let toastId = 0
+const listeners = new Set<() => void>()
 
+function setToasts(next: ToastState[]) {
+    toasts = next
+    listeners.forEach(listener => listener())
+}
+
+function subscribe(listener: () => void) {
+    listeners.add(listener)
+    return () => { listeners.delete(listener) }
+}
+
+const getSnapshot = () => toasts
+
+/** The current toasts — only the component that renders them should use
+ * this; it re-renders on every show/hide. */
+export function useToastList(): ToastState[] {
+    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
+/** Actions for raising toasts. Doesn't subscribe to the list, so the many
+ * components that only raise toasts (every code block, every diagram) don't
+ * re-render each time one appears or disappears. */
 export function useToast() {
-    const [toasts, setToasts] = useState<ToastState[]>([])
-
     const showToast = useCallback((message: string, type: ToastType = 'info', duration = 3000) => {
-        const id = toastId++
-        setToasts(prev => [...prev, { id, message, type, duration }])
+        setToasts([...toasts, { id: toastId++, message, type, duration }])
     }, [])
 
     const hideToast = useCallback((id: number) => {
-        setToasts(prev => prev.filter(toast => toast.id !== id))
+        setToasts(toasts.filter(toast => toast.id !== id))
     }, [])
 
     const success = useCallback((message: string, duration?: number) => {
@@ -39,7 +63,6 @@ export function useToast() {
     }, [showToast])
 
     return {
-        toasts,
         hideToast,
         showToast,
         success,

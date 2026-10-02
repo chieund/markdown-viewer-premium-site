@@ -1,0 +1,154 @@
+:root {
+  /* Modern Professional Palette (Linear/Vercel inspired) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f8fafc;
+  /* Slate 50 */
+  --bg-code: #f1f5f9;
+  /* Slate 100 */
+
+  --text-primary: #0f172a;
+  /* Slate 900 */
+  --text-secondary: #475569;
+  /* Slate 600 */
+  --text-tertiary: #94a3b8;
+  /* Slate 400 */
+
+  --accent: #2563eb;
+  /* Blue 600 - Standard Professional Accent */
+  --accent-light: #60a5fa;
+  --accent-hover: #1d4ed8;
+
+  --border-light: #e2e8f0;
+  /* Slate 200 */
+  --border-medium: #cbd5e1;
+  /* Slate 300 */
+  --border-dark: #94a3b8;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+  /* Sidebar - Pro Hybrid Theme (Always Dark sidebar for contrast) */
+  /* Sidebar - Modern Light Theme (Clean & Subtle) */
+  --sidebar-bg: #f8fafc;
+  /* Slate 50 */
+  --sidebar-bg-secondary: #ffffff;
+  /* White */
+  --sidebar-border: #e2e8f0;
+  /* Slate 200 */
+  --sidebar-text-primary: #334155;
+  /* Slate 700 */
+  --sidebar-text-secondary: #64748b;
+  /* Slate 500 */
+  --sidebar-text-active: #0ea5e9;
+  /* Sky 500 */
+  --sidebar-hover: #f1f5f9;
+  /* Slate 100 */
+}
+
+[data-theme="dark"] {
+  /* VS Code Default Neutral Dark Mode */
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2d2d2d;
+  --bg-code: #2d2d2d;
+
+  --text-primary: #cccccc;
+  --text-secondary: #969696;
+  --text-tertiary: #6b6b6b;
+
+  --border-light: #333333;
+  --border-medium: #444444;
+  --border-dark: #555555;
+
+  --accent: #58a6ff;
+  --accent-light: #79c0ff;
+  --accent-hover: #388bfd;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+
+  /* Sidebar - Dark Mode Override */
+  --sidebar-bg: #181818;
+  --sidebar-bg-secondary: #252526;
+  --sidebar-border: #333333;
+  --sidebar-text-primary: #cccccc;
+  --sidebar-text-secondary: #969696;
+  --sidebar-text-active: #ffffff;
+  --sidebar-hover: #2a2d2e;
+}
+
+/* Skins — layered on top of the light/dark base via [data-skin], set
+   alongside (not instead of) [data-theme]. Keeps every existing
+   [data-theme="dark"] rule (mermaid node colors, etc.) working unchanged
+   for skins that resolve to that base. */
+[data-skin="sepia"] {
+  --bg-primary: #f4ecd8;
+  --bg-secondary: #f4ecd8;
+  --bg-tertiary: #ece0c8;
+  --bg-code: #e8dcc0;
+
+  --text-primary: #5b4636;
+  --text-secondary: #7c6f5f;
+  --text-tertiary: #a08d6f;
+
+  --accent: #a0522d;
+  --accent-light: #c98a5e;
+  --accent-hover: #8b4513;
+
+  --border-light: #d8c9a3;
+  --border-medium: #c4b28a;
+  --border-dark: #a08d6f;
+
+  --sidebar-bg: #ece0c8;
+  --sidebar-bg-secondary: #f4ecd8;
+  --sidebar-border: #d8c9a3;
+  --sidebar-text-primary: #5b4636;
+  --sidebar-text-secondary: #7c6f5f;
+  --sidebar-text-active: #a0522d;
+  --sidebar-hover: #e8dcc0;
+}
+
+[data-skin="solarized"] {
+  /* Canonical Solarized Light (base3/base2 background, base01/base00 text). */
+  --bg-primary: #fdf6e3;
+  --bg-secondary: #fdf6e3;
+  --bg-tertiary: #eee8d5;
+  --bg-code: #eee8d5;
+
+  --text-primary: #586e75;
+  --text-secondary: #657b83;
+  --text-tertiary: #93a1a1;
+
+  --accent: #268bd2;
+  --accent-light: #2aa198;
+  --accent-hover: #1e6fa8;
+
+  --border-light: #eee8d5;
+  --border-medium: #d3cbb7;
+  --border-dark: #93a1a1;
+
+  --sidebar-bg: #eee8d5;
+  --sidebar-bg-secondary: #fdf6e3;
+  --sidebar-border: #d3cbb7;
+  --sidebar-text-primary: #586e75;
+  --sidebar-text-secondary: #657b83;
+  --sidebar-text-active: #268bd2;
+  --sidebar-hover: #e3dcc6;
+}
+
+body,
+#markdown-viewer-root {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  font-weight: 400;
+}

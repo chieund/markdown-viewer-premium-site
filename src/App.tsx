@@ -86,8 +86,8 @@ function App() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold mb-4">Stunning Design</h3>
-              <p className="text-slate-400 leading-relaxed">Glassmorphism UI with 5 themes — Light, Dark, System, Sepia, and Solarized — plus English & Vietnamese.</p>
+              <h3 className="text-2xl font-bold mb-4">Made for Reading</h3>
+              <p className="text-slate-400 leading-relaxed">A calm layout with a comfortable line length and 5 themes — System (matches your editor), Light, Dark, Sepia, and Solarized — in English or Vietnamese.</p>
             </div>
 
             <div className="group p-10 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] hover:border-cyan-500/20 transition-all duration-500">
@@ -107,7 +107,7 @@ function App() {
                 </svg>
               </div>
               <h3 className="text-2xl font-bold mb-4">Export Anywhere</h3>
-              <p className="text-slate-400 leading-relaxed">One click to export your document as PDF, Word (.docx), or a self-contained standalone HTML file.</p>
+              <p className="text-slate-400 leading-relaxed">Save as PDF, Word (.docx), or a self-contained HTML file — or copy the document as Jira or Backlog markup, ready to paste into a ticket.</p>
             </div>
 
             <div className="group p-10 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] hover:border-cyan-500/20 transition-all duration-500">
@@ -117,7 +117,7 @@ function App() {
                 </svg>
               </div>
               <h3 className="text-2xl font-bold mb-4">Built for Real Docs</h3>
-              <p className="text-slate-400 leading-relaxed">Find-in-preview, a resizable outline sidebar that remembers its state, and full keyboard shortcuts.</p>
+              <p className="text-slate-400 leading-relaxed">Find-in-preview, a resizable outline, and full keyboard shortcuts. Raw HTML and diagrams are sanitized, so a document from anywhere can't run scripts.</p>
             </div>
 
             <div className="group p-10 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] hover:border-cyan-500/20 transition-all duration-500">
