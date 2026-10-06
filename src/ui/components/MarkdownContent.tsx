@@ -8,19 +8,15 @@ import ImageLightbox from './ImageLightbox'
 import CodeBlock from './CodeBlock'
 import { PLANTUML_LANGUAGE_TAGS, DOT_LANGUAGE_TAGS, VEGA_LANGUAGE_TAGS } from '../utils/featureDisplay'
 import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import remarkMath from 'remark-math'
-import rehypeSlug from 'rehype-slug'
-import rehypeKatex from 'rehype-katex'
-import rehypeRaw from 'rehype-raw'
+import { REMARK_PLUGINS, REHYPE_PLUGINS, REMARK_REHYPE_OPTIONS } from '../utils/markdownPipeline'
+import { toGfm } from '../utils/toGfm'
 import React from 'react'
-import { convertBacklogToGfm } from '../utils/backlogConverter'
-import { convertJiraToGfm } from '../utils/jiraConverter'
-import { convertMermaidToGfm } from '../utils/mermaidConverter'
-import { convertPlantUmlToGfm } from '../utils/plantumlConverter'
-import { convertDotToGfm } from '../utils/dotConverter'
-import { convertVegaToGfm } from '../utils/vegaConverter'
-import rehypeLineNumbers from '../utils/rehypeLineNumbers'
+// KaTeX output is unusable without its stylesheet: the hidden MathML copy
+// shows up as duplicate plain text and \sqrt rules stretch across the page.
+// Imported here (not per platform) so every host that renders math gets it —
+// previously only the Chrome extension imported it.
+import 'katex/dist/katex.min.css'
+import { useT } from '../i18n/useT'
 
 /** Recursively flattens rendered React children back to plain text — used to
  * pull the original source text out of a raw HTML `<pre>` (whose children
@@ -46,24 +42,10 @@ interface MarkdownContentProps {
 }
 
 export default function MarkdownContent(contentProps: MarkdownContentProps) {
+    const t = useT()
     const { content, currentUrl, onMermaidRenderProgress } = contentProps
 
-    let processedContent = content;
-    const ext = currentUrl ? currentUrl.split('.').pop()?.toLowerCase() : '';
-
-    if (ext === 'jira' || ext === 'confluence') {
-        processedContent = convertJiraToGfm(content);
-    } else if (ext === 'mmd' || ext === 'mermaid') {
-        processedContent = convertMermaidToGfm(content);
-    } else if (ext === 'puml' || ext === 'plantuml') {
-        processedContent = convertPlantUmlToGfm(content);
-    } else if (ext === 'dot' || ext === 'gv' || ext === 'graphviz') {
-        processedContent = convertDotToGfm(content);
-    } else if (ext === 'vg' || ext === 'vl') {
-        processedContent = convertVegaToGfm(content, ext === 'vl');
-    } else if (ext === 'backlog' || ext === 'bl' || ext === 'blg') {
-        processedContent = convertBacklogToGfm(content);
-    }
+    const processedContent = toGfm(content, currentUrl)
 
     // Recomputed per content change; drives the completed/total counter below.
     const mermaidTotal = useMemo(
@@ -89,8 +71,9 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
     return (
         <div className="markdown-glass">
             <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[rehypeLineNumbers, rehypeSlug, rehypeKatex, rehypeRaw]}
+                remarkPlugins={REMARK_PLUGINS}
+                rehypePlugins={REHYPE_PLUGINS}
+                remarkRehypeOptions={REMARK_REHYPE_OPTIONS}
                 components={{
                     a(props) {
                         const { node: _node, href, children, ref: _ref, ...rest } = props
@@ -108,7 +91,7 @@ export default function MarkdownContent(contentProps: MarkdownContentProps) {
                                     className="external-link"
                                 >
                                     {children}
-                                    <span className="sr-only">(opens in a new tab)</span>
+                                    <span className="sr-only">{t('opensInNewTab')}</span>
                                 </a>
                             )
                         }

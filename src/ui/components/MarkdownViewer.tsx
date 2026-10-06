@@ -7,10 +7,11 @@ import { SkeletonLoader } from './SkeletonLoader'
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp'
 import { ToastContainer } from './ToastContainer'
 import { SearchPanel } from './SearchPanel'
-import { useToast } from '../hooks/useToast'
+import { useToast, useToastList } from '../hooks/useToast'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { I18nProvider } from '../i18n/I18nContext'
 import type { Locale } from '../i18n/locales'
+import { useT } from '../i18n/useT'
 
 interface MarkdownViewerProps {
     content: string
@@ -50,6 +51,7 @@ const MIN_SIDEBAR_WIDTH = 220
 const MAX_SIDEBAR_WIDTH = 420
 
 function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = false, defaultSidebarOpen, onMermaidRenderProgress, scrollToLine, onScrollLine }: MarkdownViewerProps) {
+    const t = useT()
     const [isRaw, setIsRaw] = useState(false)
     // Remembers the user's own choice across sessions (localStorage) —
     // `defaultSidebarOpen` is a deliberate host override (e.g. an embedding
@@ -60,6 +62,10 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
         if (typeof window !== 'undefined') {
             const saved = window.localStorage.getItem(SIDEBAR_OPEN_KEY)
             if (saved !== null) return saved === 'true'
+            // Below the md breakpoint the sidebar is an overlay drawer that
+            // covers the content — a VS Code preview docked beside the editor
+            // is often this narrow, so start closed there.
+            if (window.innerWidth < 768) return false
         }
         return !isEmbedded
     })
@@ -105,7 +111,8 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
     const [showShortcuts, setShowShortcuts] = useState(false)
     const [showSearch, setShowSearch] = useState(false)
     const scrollContainerRef = useRef<HTMLDivElement>(null)
-    const { toasts, hideToast, success } = useToast()
+    const { hideToast, success } = useToast()
+    const toasts = useToastList()
 
     // Scroll sync (Editor ↔ Preview). Both directions key off `data-line`
     // attributes that rehypeLineNumbers stamps onto rendered block elements
@@ -205,7 +212,7 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
             ctrlKey: true,
             callback: () => {
                 setSidebarOpen(!sidebarOpen)
-                success('Table of Contents toggled')
+                success(t('tocToggled'))
             },
             description: 'Toggle Table of Contents'
         },
@@ -223,8 +230,10 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
             key: 'p',
             ctrlKey: true,
             callback: () => {
-                window.print()
-                success('Opening print dialog...')
+                // Same path as the toolbar's PDF item (TableOfContents listens):
+                // a bare window.print() is silently blocked in a VS Code
+                // webview, so the shortcut used to do nothing there.
+                window.dispatchEvent(new CustomEvent('export-pdf'))
             },
             description: 'Print / Export PDF'
         },
@@ -293,19 +302,20 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
             )}
 
             {/* Mobile sidebar toggle button */}
-            <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className={`${isEmbedded ? 'absolute' : 'fixed'} top-4 right-4 z-[100] md:hidden p-2 rounded-lg bg-[var(--sidebar-bg)] border border-[var(--sidebar-border)] shadow-lg`}
-                aria-label="Toggle sidebar"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    {sidebarOpen ? (
-                        <path d="M18 6L6 18M6 6l12 12" />
-                    ) : (
-                        <path d="M3 12h18M3 6h18M3 18h18" />
-                    )}
-                </svg>
-            </button>
+            {/* Hidden while the drawer is open: it sat on top of the drawer's
+                own toolbar. The drawer closes via the backdrop instead. */}
+            {!sidebarOpen && (
+                <button
+                    onClick={() => setSidebarOpen(true)}
+                    className={`mobile-sidebar-toggle ${isEmbedded ? 'absolute' : 'fixed'} md:hidden`}
+                    aria-label={t('toggleSidebar')}
+                    title={t('outline')}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                        <path d="M4 6h16M8 12h12M12 18h8" />
+                    </svg>
+                </button>
+            )}
 
             {/* Sidebar - responsive. Mobile slides fully off-screen via
                 translate (it's `fixed`, so translate doesn't reflow anything);
@@ -320,7 +330,7 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
             <div
                 className={`sidebar-panel
         ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0
-        ${isEmbedded ? 'absolute md:relative' : 'fixed md:sticky'} top-0 right-0 h-full w-full
+        ${isEmbedded ? 'absolute md:relative' : 'fixed md:sticky'} top-0 right-0 h-full w-[min(320px,88vw)]
         md:w-[var(--sidebar-w)] ${sidebarOpen ? 'md:border-l' : 'md:border-l-0'}
         border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]
         overflow-hidden shrink-0 z-[90]
@@ -338,12 +348,13 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
                         className="hidden md:block absolute left-0 top-0 h-full w-1.5 -ml-px cursor-col-resize z-[10] hover:bg-[var(--accent)] hover:opacity-40"
                         role="separator"
                         aria-orientation="vertical"
-                        aria-label="Resize sidebar"
+                        aria-label={t('resizeSidebar')}
                     />
                 )}
                 <div className="h-full w-full md:w-[var(--sidebar-content-w)] flex flex-col">
                     <TableOfContents
                         content={content}
+                        currentUrl={currentUrl}
                         isRaw={isRaw}
                         onToggleRaw={() => setIsRaw(!isRaw)}
                         containerRef={scrollContainerRef}
@@ -358,8 +369,8 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className={`hidden md:flex ${isEmbedded ? 'absolute' : 'fixed'} top-1/2 -translate-y-1/2 z-[95] w-5 h-12 items-center justify-center rounded-l-md border border-r-0 border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] text-[var(--sidebar-text-secondary)] hover:text-[var(--sidebar-text-primary)] shadow-md ${isResizingSidebar ? '' : 'transition-all duration-300 ease-in-out'}`}
                 style={{ right: sidebarOpen ? `${sidebarWidth}px` : '0px' }}
-                aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-                title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+                aria-label={sidebarOpen ? t('collapseSidebar') : t('expandSidebar')}
+                title={sidebarOpen ? t('collapseSidebar') : t('expandSidebar')}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     {sidebarOpen ? <path d="M9 6l6 6-6 6" /> : <path d="M15 6l-6 6 6 6" />}
@@ -369,7 +380,8 @@ function MarkdownViewerInner({ content, isLoading, currentUrl, isEmbedded = fals
             {/* Overlay for mobile when sidebar is open */}
             {sidebarOpen && (
                 <div
-                    className={`${isEmbedded ? 'absolute' : 'fixed'} inset-0 bg-black/50 z-[80] md:hidden`}
+                    className={`${isEmbedded ? 'absolute' : 'fixed'} inset-0 bg-black/40 z-[80] md:hidden`}
+                    aria-hidden="true"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}

@@ -26,10 +26,16 @@ export async function renderVega(spec: string, mode: VegaMode): Promise<string> 
     document.body.appendChild(container)
 
     try {
+        // Evaluate spec expressions with vega-interpreter (AST walking) rather
+        // than vega's default codegen, which compiles them with `new Function`:
+        // a spec is document content, so it must not get a code-execution path.
+        const { expressionInterpreter } = await import('vega-interpreter')
         const result = await embed(container, parsedSpec as Parameters<typeof embed>[1], {
             mode,
             actions: false,
             renderer: 'svg',
+            ast: true,
+            expr: expressionInterpreter,
         })
 
         // Extract SVG

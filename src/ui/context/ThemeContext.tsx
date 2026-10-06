@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useState, type ReactNode } from 'react'
 import { ThemeContext, type Theme } from './ThemeContextDefinition'
 
 const VALID_THEMES: Theme[] = ['light', 'dark', 'system', 'sepia', 'solarized']
@@ -64,11 +64,19 @@ export function ThemeProvider({ children, hostTheme }: ThemeProviderProps) {
         return getSystemTheme()
     })
 
-    useEffect(() => {
+    // Layout effect, not a plain effect: the attributes gate the host color
+    // override (vscode-theme-override.css), and setting them after the first
+    // paint flashed the light palette in a dark VS Code on every open.
+    useLayoutEffect(() => {
         const updateResolvedTheme = () => {
             const resolved = theme === 'system' ? getSystemTheme() : baseOf(theme)
             setResolvedTheme(resolved)
             document.documentElement.setAttribute('data-theme', resolved)
+            // The user's actual choice (vs. the resolved light/dark base) —
+            // lets host stylesheets follow the host's own colors only when
+            // the user asked for "system", not when they picked Light/Dark
+            // explicitly (see vscode-theme-override.css).
+            document.documentElement.setAttribute('data-theme-mode', theme)
             if (isSkin(theme)) {
                 document.documentElement.setAttribute('data-skin', theme)
             } else {

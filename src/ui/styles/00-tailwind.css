@@ -1,0 +1,5 @@
+/* Fonts are now loaded via @fontsource in main.tsx to avoid CSP errors */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

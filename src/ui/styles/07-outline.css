@@ -1,0 +1,337 @@
+/* Outline Panel Styles */
+.outline-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.outline-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 380px;
+  max-width: 90vw;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(26, 31, 58, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(129, 140, 248, 0.3);
+  box-shadow: 20px 0 60px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  animation: slideLeft 0.3s ease-out;
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.outline-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(129, 140, 248, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, rgba(129, 140, 248, 0.1) 0%, transparent 100%);
+}
+
+.outline-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.outline-count {
+  font-size: 0.75rem;
+  background: rgba(129, 140, 248, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.outline-close-btn {
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.outline-close-btn:hover {
+  background: rgba(220, 38, 38, 0.2);
+  color: #fca5a5;
+}
+
+.outline-search {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(129, 140, 248, 0.15);
+  position: relative;
+}
+
+.outline-search-icon {
+  position: absolute;
+  left: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a1a1aa;
+  pointer-events: none;
+}
+
+.outline-search-input {
+  width: 100%;
+  padding: 12px 16px 12px 40px;
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  border-radius: 12px;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.outline-search-input::placeholder {
+  color: #64748b;
+}
+
+.outline-search-input:focus {
+  background: rgba(129, 140, 248, 0.15);
+  border-color: rgba(129, 140, 248, 0.4);
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+}
+
+.outline-search-clear {
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.outline-search-clear:hover {
+  color: #f1f5f9;
+}
+
+.outline-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.outline-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.outline-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.outline-content::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.3);
+  border-radius: 3px;
+}
+
+.outline-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 140, 248, 0.5);
+}
+
+.outline-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #a1a1aa;
+  text-align: center;
+}
+
+.outline-empty svg {
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.outline-empty p {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.outline-tree {
+  padding: 8px 0;
+}
+
+.outline-node {
+  position: relative;
+}
+
+.outline-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  position: relative;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  user-select: none;
+  color: var(--sidebar-text-secondary);
+  margin: 1px 0;
+  border-radius: 5px;
+}
+
+/* Top-level headings carry the document's structure; give them weight so
+   the tree scans without relying on indentation alone. */
+.outline-item[data-level="1"],
+.outline-item[data-level="2"] {
+  color: var(--sidebar-text-primary);
+}
+
+.outline-item[data-level="1"] {
+  font-weight: 600;
+}
+
+.outline-item:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-text-primary);
+}
+
+.outline-item.active {
+  background: var(--sidebar-hover);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.outline-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.outline-expand-icon {
+  font-size: 0.7rem;
+  color: var(--sidebar-text-secondary);
+  transition: transform 0.2s ease;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+.outline-expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.outline-highlight {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.outline-children {
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.outline-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(129, 140, 248, 0.2);
+  background: linear-gradient(180deg, transparent 0%, rgba(129, 140, 248, 0.05) 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.outline-footer-btn {
+  background: transparent;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  color: #a1a1aa;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.outline-footer-btn:hover {
+  background: rgba(129, 140, 248, 0.15);
+  color: #f1f5f9;
+  border-color: rgba(129, 140, 248, 0.4);
+}
+
+.outline-footer-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.outline-footer-btn:hover svg {
+  transform: translateY(-2px);
+}
+
+.outline-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+kbd {
+  background: rgba(129, 140, 248, 0.2);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .outline-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+}

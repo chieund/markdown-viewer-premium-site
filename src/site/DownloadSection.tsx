@@ -29,6 +29,11 @@ export function DownloadSection() {
             <p className="text-slate-500 text-sm">Windows, macOS & Linux</p>
           </a>
         </div>
+
+        <p className="text-slate-500 text-sm">
+          Free and ad-free. If it saves you time, you can{' '}
+          <a href="https://buymeacoffee.com/bumkom" target="_blank" rel="noopener noreferrer" className="text-amber-300 underline decoration-amber-400/40 hover:text-amber-200 transition-colors">buy me a coffee</a>.
+        </p>
       </div>
     </section>
   );
