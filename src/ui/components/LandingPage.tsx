@@ -91,7 +91,7 @@ export default function LandingPage() {
             <footer className="border-t border-[var(--border-light)] py-12 bg-[var(--bg-secondary)] text-center text-[var(--text-secondary)]">
                 <p>
                     Built with <span className="text-red-500">❤️</span> by <a href="https://github.com/chieund" className="underline hover:text-[var(--text-primary)]">chieund</a>.
-                    Open Source on <a href="https://github.com/chieund/markdown-previewer" className="underline hover:text-[var(--text-primary)]">GitHub</a>.
+                    Questions and bug reports on <a href="https://github.com/chieund/markdown-viewer-premium-site/issues" className="underline hover:text-[var(--text-primary)]">GitHub</a>.
                 </p>
             </footer>
         </div>
