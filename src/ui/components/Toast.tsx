@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useT } from '../i18n/useT'
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning'
 
@@ -48,6 +49,7 @@ const toastStyles = {
 }
 
 export function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
+    const t = useT()
     useEffect(() => {
         if (duration > 0) {
             const timer = setTimeout(onClose, duration)
@@ -61,7 +63,7 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
                 {toastIcons[type]}
             </div>
             <span className="toast-message">{message}</span>
-            <button onClick={onClose} className="toast-close" aria-label="Close">
+            <button onClick={onClose} className="toast-close" aria-label={t('close')}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />

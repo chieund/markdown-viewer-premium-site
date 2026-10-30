@@ -1,98 +1,74 @@
+import { useEffect } from 'react'
 import { useTheme } from '../hooks/useTheme'
-import { useState, useRef, useEffect } from 'react'
+import { useT } from '../i18n/useT'
+import type { TranslationKey } from '../i18n/locales'
+import type { Theme } from '../context/ThemeContextDefinition'
+import { ToolbarMenu } from './ToolbarMenu'
 
-interface ThemeToggleProps {
-    className?: string
+/** Two-tone dot previewing a theme's page background and accent — tells the
+ * user what they'll get before they pick it, which an emoji can't. */
+function Swatch({ bg, fg, split }: { bg: string; fg: string; split?: string }) {
+    return (
+        <span
+            className="theme-swatch"
+            style={{ background: split ? `linear-gradient(135deg, ${bg} 50%, ${split} 50%)` : bg }}
+            aria-hidden="true"
+        >
+            <span style={{ background: fg }} />
+        </span>
+    )
 }
 
-export function ThemeToggle({ className = '' }: ThemeToggleProps) {
-    const { theme, setTheme } = useTheme()
-    const [showMenu, setShowMenu] = useState(false)
-    const menuRef = useRef<HTMLDivElement>(null)
+const THEME_OPTIONS: Array<{ value: Theme; labelKey: TranslationKey; swatch: { bg: string; fg: string; split?: string } }> = [
+    { value: 'system', labelKey: 'themeSystem', swatch: { bg: '#ffffff', split: '#1e1e1e', fg: '#58a6ff' } },
+    { value: 'light', labelKey: 'themeLight', swatch: { bg: '#ffffff', fg: '#2563eb' } },
+    { value: 'dark', labelKey: 'themeDark', swatch: { bg: '#1e1e1e', fg: '#58a6ff' } },
+    { value: 'sepia', labelKey: 'themeSepia', swatch: { bg: '#f4ecd8', fg: '#a0522d' } },
+    { value: 'solarized', labelKey: 'themeSolarized', swatch: { bg: '#fdf6e3', fg: '#268bd2' } },
+]
 
+function TriggerIcon({ theme }: { theme: Theme }) {
+    const common = { xmlns: 'http://www.w3.org/2000/svg', width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true }
+    if (theme === 'light') {
+        return <svg {...common}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
+    }
+    if (theme === 'dark') {
+        return <svg {...common}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+    }
+    if (theme === 'system') {
+        return <svg {...common}><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
+    }
+    // Skins: a half-filled circle, the conventional "appearance" glyph.
+    return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" /></svg>
+}
+
+export function ThemeToggle() {
+    const { theme, setTheme, toggleTheme } = useTheme()
+    // Also rendered on the Chrome LandingPage, outside any I18nProvider.
+    const t = useT()
+
+    // Ctrl+D (MarkdownViewer's shortcut list) dispatches this event; nothing
+    // listened for it before, so the documented shortcut did nothing.
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setShowMenu(false)
-            }
-        }
+        const onToggle = () => toggleTheme()
+        window.addEventListener('toggle-theme', onToggle)
+        return () => window.removeEventListener('toggle-theme', onToggle)
+    }, [toggleTheme])
 
-        if (showMenu) {
-            document.addEventListener('mousedown', handleClickOutside)
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
-    }, [showMenu])
-
-    const themeOptions = [
-        { value: 'light', label: 'Light', icon: '☀️', kbd: 'L' },
-        { value: 'dark', label: 'Dark', icon: '🌙', kbd: 'D' },
-        { value: 'system', label: 'System', icon: '💻', kbd: 'S' },
-        { value: 'sepia', label: 'Sepia', icon: '📜', kbd: '' },
-        { value: 'solarized', label: 'Solarized', icon: '🌻', kbd: '' },
-    ] as const
-
-    const currentIcon = theme === 'light'
-        ? <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="theme-icon">
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2" />
-            <path d="M12 20v2" />
-            <path d="m4.93 4.93 1.41 1.41" />
-            <path d="m17.66 17.66 1.41 1.41" />
-            <path d="M2 12h2" />
-            <path d="M20 12h2" />
-            <path d="m6.34 17.66-1.41 1.41" />
-            <path d="m19.07 4.93-1.41 1.41" />
-        </svg>
-        : theme === 'dark'
-        ? <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="theme-icon">
-            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-        </svg>
-        : theme === 'sepia'
-        ? <span className="theme-icon-emoji" style={{ fontSize: 14 }}>📜</span>
-        : theme === 'solarized'
-        ? <span className="theme-icon-emoji" style={{ fontSize: 14 }}>🌻</span>
-        : <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="theme-icon">
-            <rect x="2" y="3" width="20" height="14" rx="2" />
-            <path d="M8 21h8" />
-            <path d="M12 17v4" />
-        </svg>
+    const current = THEME_OPTIONS.find(o => o.value === theme)
 
     return (
-        <div className="relative" ref={menuRef}>
-            <button
-                onClick={() => setShowMenu(!showMenu)}
-                className={`theme-toggle-btn ${className}`}
-                title={`Current theme: ${theme}`}
-                aria-label="Toggle theme menu"
-            >
-                {currentIcon}
-            </button>
-
-            {showMenu && (
-                <div className="theme-menu">
-                    {themeOptions.map((option) => (
-                        <button
-                            key={option.value}
-                            onClick={() => {
-                                setTheme(option.value)
-                                setShowMenu(false)
-                            }}
-                            className={`theme-menu-item ${theme === option.value ? 'active' : ''}`}
-                        >
-                            <span className="theme-icon-emoji">{option.icon}</span>
-                            <span className="theme-label">{option.label}</span>
-                            {theme === option.value && (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="check-icon">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            )}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
+        <ToolbarMenu
+            label={t('themeMenu')}
+            title={`${t('theme')}: ${current ? t(current.labelKey) : theme}`}
+            trigger={<TriggerIcon theme={theme} />}
+            items={THEME_OPTIONS.map(option => ({
+                key: option.value,
+                label: t(option.labelKey),
+                icon: <Swatch {...option.swatch} />,
+                active: theme === option.value,
+                onSelect: () => setTheme(option.value),
+            }))}
+        />
     )
 }

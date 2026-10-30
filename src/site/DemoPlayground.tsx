@@ -76,7 +76,11 @@ export function DemoPlayground({ presets, title = 'Try It Live', subtitle, secti
               <div className="w-2.5 h-2.5 rounded-full bg-green-500/10 border border-green-500/20" />
             </div>
           </div>
-          <div className="flex-1 overflow-auto p-6">
+          {/* The viewer's own surface color, not the site's dark panel: the
+              viewer follows the visitor's light/dark preference, and a
+              light-theme document on a hard-coded dark panel left headings
+              and alert text dark-on-dark. */}
+          <div className="flex-1 overflow-auto p-6 bg-[var(--bg-primary)] text-[var(--text-primary)]">
             <MarkdownContent content={content} />
           </div>
         </div>

@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- an import can't pull in an ambient .d.ts for consumers' tsc (see vendor-modules.d.ts)
+/// <reference path="../vendor-modules.d.ts" />
 // @plantuml/core (TeaVM-compiled PlantUML + Graphviz) is ~8.6MB uncompressed,
 // so it's loaded lazily here — only the first time a ```plantuml block is
 // actually rendered, never as part of the main bundle.
@@ -31,18 +33,12 @@ import vizGlobalUrlRaw from '@plantuml/core/viz-global.js?url'
 // import below already relies on — which correctly lands in the same
 // `assets/` directory this module itself was loaded from.
 //
-// That filename-only trick is itself VS-Code-webview-specific, though: it
-// assumes this module and viz-global.js always land in the same flat
-// `assets/` directory, which is only true for a production Vite build.
-// Under `vite dev` (e.g. the marketing site's `pnpm dev`), this module's
-// `import.meta.url` is its original unbundled source path
-// (`/src/utils/plantumlEngine.ts`) while `vizGlobalUrlRaw` points at Vite's
-// dev-server-served copy in a completely different directory — discarding
-// that directory and reusing just the filename produced a 404 for
-// `/src/utils/viz-global.js`, a path that was never valid in dev mode.
-// `vizGlobalUrlRaw` (the raw `?url` import) is already the *correct* path
-// for whatever mode Vite is currently running in, dev or prod alike — so
-// only apply the filename-only rewrite where it's actually needed.
+// That filename-only rewrite is only right inside the VS Code webview,
+// where this module and viz-global.js sit in the same flat `assets/`
+// folder. Under `vite dev` (`pnpm dev:chrome`, the website's `pnpm dev`)
+// this module is served from its source path while viz-global.js is served
+// from elsewhere, so reusing just the filename 404'd. Everywhere else the
+// raw `?url` value is already the correct URL for the current mode.
 const isVSCodeWebview = typeof (window as unknown as { acquireVsCodeApi?: unknown }).acquireVsCodeApi === 'function'
 const vizGlobalUrl = isVSCodeWebview
     ? new URL(vizGlobalUrlRaw.split('/').pop()!, import.meta.url).href
@@ -84,7 +80,6 @@ export function loadVizGlobal(): Promise<void> {
 function loadEngine(): Promise<PlantUmlEngine> {
     if (!engineReady) {
         engineReady = loadVizGlobal()
-            // @ts-expect-error -- @plantuml/core ships no declaration file
             .then(() => import('@plantuml/core'))
             .catch(err => {
                 engineReady = null

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { I18nContext } from './I18nContextDefinition'
 import { DICTIONARIES, type Locale, type TranslationKey } from './locales'
 
@@ -26,10 +26,10 @@ export function I18nProvider({ children, hostLocale }: I18nProviderProps) {
         return detectLocale()
     })
 
-    const setLocale = (next: Locale) => {
+    const setLocale = useCallback((next: Locale) => {
         setLocaleState(next)
         if (typeof window !== 'undefined') localStorage.setItem('locale', next)
-    }
+    }, [])
 
     // "Adjusting state when a prop changes", during render rather than in an
     // effect — see ThemeContext.tsx's identical hostTheme handling for why.
@@ -39,14 +39,19 @@ export function I18nProvider({ children, hostLocale }: I18nProviderProps) {
         if (hostLocale) setLocale(hostLocale)
     }
 
-    const t = (key: TranslationKey, vars?: Record<string, string>): string => {
+    // Stable per locale: diagram blocks use t() inside render effects, so a
+    // new function every provider render would re-run them on each keystroke.
+    const t = useCallback((key: TranslationKey, vars?: Record<string, string>): string => {
         const template = DICTIONARIES[locale][key] ?? DICTIONARIES.en[key] ?? key
         if (!vars) return template
-        return Object.entries(vars).reduce((acc, [name, value]) => acc.replaceAll(`{${name}}`, value), template)
-    }
+        // split/join rather than replaceAll: the desktop app compiles against ES2020.
+        return Object.entries(vars).reduce((acc, [name, value]) => acc.split(`{${name}}`).join(value), template)
+    }, [locale])
+
+    const value = useMemo(() => ({ locale, setLocale, t }), [locale, setLocale, t])
 
     return (
-        <I18nContext.Provider value={{ locale, setLocale, t }}>
+        <I18nContext.Provider value={value}>
             {children}
         </I18nContext.Provider>
     )

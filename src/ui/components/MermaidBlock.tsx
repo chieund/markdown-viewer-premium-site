@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import mermaid from 'mermaid'
-import zenumlDiagram from '@mermaid-js/mermaid-zenuml'
+import type MermaidApi from 'mermaid'
 import ReactFlowDiagram from './ReactFlowDiagram'
 import SequenceFlowDiagram from './SequenceFlowDiagram'
 import CodeBlock from './CodeBlock'
@@ -14,9 +13,27 @@ import { tryParseErDiagram } from '../utils/mermaidErToReactFlow'
 
 // Mermaid will be re-initialized based on theme in component
 
-// zenuml ships as an external diagram (not bundled into mermaid core) — must
-// register once before mermaid can parse/render a `zenuml` chart.
-const externalDiagramsReady = mermaid.registerExternalDiagrams([zenumlDiagram])
+// Loaded on first use rather than imported statically: Mermaid (with d3,
+// dagre, cytoscape, ...) was most of the webview's 2.9 MB entry bundle, paid
+// on every preview open even for documents with no diagram. zenuml ships as
+// an external diagram and must be registered once before a `zenuml` chart.
+let mermaidReady: Promise<typeof MermaidApi> | null = null
+function loadMermaid(): Promise<typeof MermaidApi> {
+    if (!mermaidReady) {
+        mermaidReady = (async () => {
+            const [{ default: mermaid }, { default: zenumlDiagram }] = await Promise.all([
+                import('mermaid'),
+                import('@mermaid-js/mermaid-zenuml'),
+            ])
+            await mermaid.registerExternalDiagrams([zenumlDiagram])
+            return mermaid
+        })().catch(err => {
+            mermaidReady = null
+            throw err
+        })
+    }
+    return mermaidReady
+}
 
 interface MermaidBlockProps {
     chart: string
@@ -25,6 +42,8 @@ interface MermaidBlockProps {
 }
 
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
+import { sanitizeDiagramSvg, escapeHtml } from '../utils/sanitizeSvg'
+import { useT } from '../i18n/useT'
 
 // ... (Mermaid init and props)
 
@@ -79,6 +98,7 @@ function injectFlowDots(svgEl: SVGSVGElement | null) {
 }
 
 export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
+    const t = useT()
     const containerRef = useRef<HTMLDivElement>(null)
     const modalContainerRef = useRef<HTMLDivElement>(null)
     // Ref so the render effect (keyed on [chart, isDark]) can call the latest
@@ -136,7 +156,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
     useEffect(() => {
         const renderChart = async () => {
             try {
-                await externalDiagramsReady
+                const mermaid = await loadMermaid()
 
                 // Pre-process chart to safely handle quotes in labels
                 // We replace double quotes with single quotes inside node labels [] and edge labels ||
@@ -259,9 +279,14 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                 mermaid.initialize({
                     startOnLoad: false,
                     theme: isDark ? 'dark' : 'neutral',
-                    securityLevel: 'loose',
+                    // 'strict': Mermaid sanitizes label text and disables `click`
+                    // callbacks/JS URLs that 'loose' would let a document run.
+                    securityLevel: 'strict',
                     fontFamily: 'Inter, "Noto Sans JP", sans-serif',
                     htmlLabels: true, // Enable HTML labels for better formatting support (e.g. <br>)
+                    // Mermaid's 11px Gantt text was barely legible once the
+                    // chart scaled down to the column width.
+                    gantt: { fontSize: 13, sectionFontSize: 13, barHeight: 24, barGap: 6 },
                     themeVariables: isDark ? {
                         fontSize: '16px',
                         fontFamily: 'Inter, "Noto Sans JP", sans-serif',
@@ -270,7 +295,32 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                         primaryTextColor: '#f8fafc',
                         lineColor: '#cbd5e1', // Slate 300 - High contrast lines
                         secondaryColor: '#334155', // Slate 700
-                        tertiaryColor: '#1e293b' // Slate 800
+                        tertiaryColor: '#1e293b', // Slate 800
+                        // Mermaid's dark theme otherwise derives a light grey
+                        // here, putting white edge/transition label text on a
+                        // near-white box.
+                        edgeLabelBackground: '#1e293b',
+                        // Gantt: Mermaid's dark defaults are a brown section
+                        // band and light bars with dark text — re-key them to
+                        // the same slate scale as the rest of the dark theme.
+                        sectionBkgColor: '#1e293b',
+                        sectionBkgColor2: '#1e293b',
+                        altSectionBkgColor: '#0f172a',
+                        gridColor: '#334155',
+                        taskBkgColor: '#475569',
+                        taskBorderColor: '#94a3b8',
+                        taskTextColor: '#f8fafc',
+                        taskTextLightColor: '#f8fafc',
+                        taskTextDarkColor: '#f8fafc',
+                        taskTextOutsideColor: '#e2e8f0',
+                        activeTaskBkgColor: '#1d4ed8',
+                        activeTaskBorderColor: '#60a5fa',
+                        doneTaskBkgColor: '#334155',
+                        doneTaskBorderColor: '#64748b',
+                        critBkgColor: '#b91c1c',
+                        critBorderColor: '#f87171',
+                        todayLineColor: '#f59e0b',
+                        titleColor: '#f8fafc'
                     } : {
                         fontSize: '16px',
                         fontFamily: 'Inter, "Noto Sans JP", sans-serif',
@@ -288,21 +338,20 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                 // Handle different mermaid versions
                 const svgContent = typeof result === 'string' ? result : result.svg
 
-                // Sanitize SVG before setting state
-                // We bypass DOMPurify for Mermaid SVG content because it aggressively strips 
-                // content from foreignObject (needed for HTML labels), even with relaxed config.
-                // Since Mermaid generates this SVG from safe text input, risk is managed.
-                setSvg(svgContent)
+                // Sanitized even though Mermaid ran in 'strict' mode: the
+                // Chrome extension renders untrusted Markdown from the web.
+                // See sanitizeSvg.ts for how foreignObject labels survive.
+                setSvg(sanitizeDiagramSvg(svgContent))
             } catch (err) {
                 console.error('Mermaid render error:', err)
                 // Show more helpful error message
                 const errorMsg = err instanceof Error ? err.message : 'Unknown error'
                 setSvg(`
-                    <div class="text-red-400 p-4 border border-red-500 rounded bg-red-50 dark:bg-red-900/20">
-                        <div class="font-semibold mb-2">Mermaid Syntax Error</div>
-                        <div class="text-sm mb-2">${errorMsg}</div>
+                    <div data-diagram-error class="text-red-400 p-4 border border-red-500 rounded bg-red-50 dark:bg-red-900/20">
+                        <div class="font-semibold mb-2">${escapeHtml(t('mermaidSyntaxError'))}</div>
+                        <div class="text-sm mb-2">${escapeHtml(errorMsg)}</div>
                         <div class="text-xs text-gray-600 dark:text-gray-400">
-                            Tip: Try wrapping text with special characters in quotes
+                            ${escapeHtml(t('mermaidSyntaxTip'))}
                         </div>
                     </div>
                 `)
@@ -312,7 +361,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
         }
 
         renderChart()
-    }, [chart, isDark])
+    }, [chart, isDark, t])
 
     // Add the flow dots once the inline SVG has committed to the DOM.
     useEffect(() => {
@@ -389,7 +438,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                     // Chromium computed the inner one's paint bounds as empty). So RF renders
                     // directly here, full-size, with just a close button of its own.
                     <div className="mermaid-rf-modal-wrapper">
-                        <button onClick={() => setIsExpanded(false)} title="Close (ESC)" className="mermaid-rf-modal-close">✕</button>
+                        <button onClick={() => setIsExpanded(false)} title={t('closeEsc')} className="mermaid-rf-modal-close">✕</button>
                         {isSequence
                             ? <SequenceFlowDiagram chart={chart} isDark={isDark} id={`${idRef.current}-rf-modal`} onFallback={handleFlowFallback} />
                             : <ReactFlowDiagram chart={chart} isDark={isDark} id={`${idRef.current}-rf-modal`} onFallback={handleFlowFallback} parse={genericParse} />}
@@ -412,24 +461,24 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                         {({ zoomIn, zoomOut, resetTransform, centerView }) => (
                             <>
                                 <div className="mermaid-controls">
-                                    <button onClick={() => zoomIn()} title="Zoom In (Scroll Up)">
+                                    <button onClick={() => zoomIn()} title={t('zoomInScroll')}>
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                                             <path d="M8 4v8M4 8h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                         </svg>
                                     </button>
-                                    <button onClick={() => zoomOut()} title="Zoom Out (Scroll Down)">
+                                    <button onClick={() => zoomOut()} title={t('zoomOutScroll')}>
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                                             <path d="M4 8h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                         </svg>
                                     </button>
-                                    <button onClick={() => resetTransform()} title="Fit to Screen (Double Click)">
+                                    <button onClick={() => resetTransform()} title={t('fitToScreen')}>
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                                             <path d="M2 2h5M2 2v5M2 2l5 5M14 14h-5M14 14v-5M14 14l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                         </svg>
                                     </button>
-                                    <button onClick={() => centerView(1)} title="Center & Reset">⟲</button>
+                                    <button onClick={() => centerView(1)} title={t('centerReset')}>⟲</button>
                                     <div className="divider"></div>
-                                    <button onClick={() => setIsExpanded(false)} title="Close (ESC)" className="close-btn">✕</button>
+                                    <button onClick={() => setIsExpanded(false)} title={t('closeEsc')} className="close-btn">✕</button>
                                 </div>
                                 <TransformComponent wrapperClass="mermaid-transform-wrapper" contentClass="mermaid-transform-content">
                                     <div className="mermaid-svg-wrapper" ref={modalContainerRef} dangerouslySetInnerHTML={{ __html: svg }} />
@@ -446,7 +495,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
         return (
             <div className="mermaid-modal-overlay animate-fade-in" onClick={() => setShowSource(false)}>
                 <div className="mermaid-source-modal" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => setShowSource(false)} title="Close (ESC)" className="mermaid-source-close">✕</button>
+                    <button onClick={() => setShowSource(false)} title={t('closeEsc')} className="mermaid-source-close">✕</button>
                     <div className="mermaid-source-scroll">
                         <CodeBlock language="mermaid" value={chart.trim()} />
                     </div>
@@ -466,7 +515,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                             <button
                                 onClick={() => setShowReactFlow(v => !v)}
                                 className="px-2 py-1 rounded-md hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all text-[11px] font-medium"
-                                title={showReactFlow ? 'Switch to animated SVG view' : 'Switch to interactive Flow view'}
+                                title={showReactFlow ? t('switchToSvg') : t('switchToFlow')}
                             >
                                 {/* Label names the mode a click switches TO (matches the tooltip),
                                     not the mode currently showing — otherwise "Flow" reads like a
@@ -478,7 +527,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                         <button
                             onClick={handleCopyImage}
                             className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-                            title={copyImageState === 'error' ? 'Copy failed' : 'Copy diagram as image'}
+                            title={copyImageState === 'error' ? t('diagramCopyFailed') : t('copyDiagramImage')}
                         >
                             {copyImageState === 'done' ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -490,7 +539,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                         <button
                             onClick={() => setShowSource(true)}
                             className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-                            title="View Mermaid source"
+                            title={t('viewSource', { name: 'Mermaid' })}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
                         </button>
@@ -498,7 +547,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                         <button
                             onClick={() => setIsExpanded(true)}
                             className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-                            title="Expand Diagram"
+                            title={t('expandDiagram')}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
                         </button>
@@ -517,7 +566,7 @@ export default function MermaidBlock({ chart, onRendered }: MermaidBlockProps) {
                         </div>
                     ) : (
                         <div
-                            className="overflow-x-auto w-full flex justify-center"
+                            className="mermaid-render-area overflow-x-auto w-full flex justify-center"
                             ref={containerRef}
                             dangerouslySetInnerHTML={{ __html: svg }}
                         />

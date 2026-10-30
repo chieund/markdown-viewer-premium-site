@@ -1,0 +1,276 @@
+/* ==========================================
+   SIDEBAR HEADER, TOOLBAR & MENUS
+   ========================================== */
+.toc-header {
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--sidebar-border);
+  padding: 10px 12px 12px;
+}
+
+.toc-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+  margin-bottom: 10px;
+}
+
+.toc-header-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sidebar-text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toc-toolbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.toolbar-menu-root {
+  position: relative;
+}
+
+/* Inside the sidebar toolbar every menu anchors to the toolbar's right edge
+   rather than its own button: the sidebar clips overflow, and a menu hung
+   off the leftmost (theme) button spilled past the sidebar's left edge. */
+.toc-toolbar .toolbar-menu-root {
+  position: static;
+}
+
+.toc-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--sidebar-border);
+}
+
+.toolbar-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  /* 196px = the 220px minimum sidebar minus its 12px gutters, so the
+     longest item ("Copy as Backlog markup") stays on one line. */
+  min-width: 196px;
+  padding: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  z-index: 1000;
+  animation: toolbar-menu-in 0.12s ease-out;
+}
+
+[data-theme="dark"] .toolbar-menu {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.toolbar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.toolbar-menu-item:hover {
+  background: var(--sidebar-hover);
+}
+
+.toolbar-menu-item.active {
+  font-weight: 500;
+}
+
+.toolbar-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  flex-shrink: 0;
+}
+
+.toolbar-menu-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.toolbar-menu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border-light);
+}
+
+.toolbar-menu-check {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+@keyframes toolbar-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Theme preview dot: page color with an accent pip. */
+.theme-swatch {
+  position: relative;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.45);
+}
+
+.theme-swatch > span {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.lang-code {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.lang-code--muted {
+  color: var(--text-secondary);
+}
+
+.file-badge {
+  display: inline-block;
+  min-width: 30px;
+  padding: 2px 0;
+  border: 1px solid var(--border-medium);
+  border-radius: 3px;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.toc-filter {
+  position: relative;
+}
+
+.toc-filter-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--sidebar-text-secondary);
+  pointer-events: none;
+}
+
+.toc-filter-input {
+  width: 100%;
+  height: 28px;
+  padding: 0 28px 0 28px;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  color: var(--sidebar-text-primary);
+  background: var(--sidebar-bg-secondary);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.toc-filter-input::placeholder {
+  color: var(--sidebar-text-secondary);
+  opacity: 0.8;
+}
+
+.toc-filter-input:focus {
+  border-color: var(--accent);
+}
+
+.toc-filter-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sidebar-text-secondary);
+  cursor: pointer;
+}
+
+.toc-filter-clear:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-text-primary);
+}
+
+.toc-tree {
+  padding: 8px 8px 0;
+}
+
+.toc-empty {
+  padding: 24px 12px;
+  font-size: 0.8125rem;
+  text-align: center;
+  color: var(--sidebar-text-secondary);
+}
+
+.mobile-sidebar-toggle {
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--sidebar-border);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .mobile-sidebar-toggle {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-menu,
+  .outline-children {
+    animation: none;
+  }
+}

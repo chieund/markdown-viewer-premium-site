@@ -1,4 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react'
+import { useT } from '../i18n/useT'
 
 interface BackToTopProps {
     containerRef: RefObject<HTMLDivElement | null>
@@ -9,6 +10,7 @@ interface BackToTopProps {
 const SCROLL_THRESHOLD = 300
 
 export default function BackToTop({ containerRef, sidebarOpen = true }: BackToTopProps) {
+    const t = useT()
     const [isVisible, setIsVisible] = useState(false)
     const [scrollProgress, setScrollProgress] = useState(0)
 
@@ -51,8 +53,8 @@ export default function BackToTop({ containerRef, sidebarOpen = true }: BackToTo
             <button
                 onClick={scrollToTop}
                 className="back-to-top-btn"
-                aria-label="Back to Top (Home key)"
-                title="Back to Top (Home)"
+                aria-label={t('backToTop')}
+                title={t('backToTop')}
             >
                 {/* Progress Circle */}
                 <svg className="progress-ring" width="50" height="50">

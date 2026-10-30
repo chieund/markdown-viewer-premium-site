@@ -1,0 +1,405 @@
+/* ==========================================
+   REACT FLOW MERMAID DIAGRAMS
+   ========================================== */
+
+/* Wrapper */
+.mermaid-rf-wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 300px;
+}
+
+.mermaid-rf-modal-wrapper {
+  position: relative;
+  width: 80vw;
+  height: 70vh;
+  margin: auto;
+}
+
+.mermaid-rf-modal-close {
+  position: absolute;
+  top: -48px;
+  right: 0;
+  z-index: 50;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-secondary);
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.2s ease;
+}
+
+.mermaid-rf-modal-close:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .mermaid-rf-modal-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* ── Animated Edge ── */
+@keyframes dashdraw {
+  0% {
+    stroke-dashoffset: 30;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* BaseEdge puts the className straight on the <path> itself (there's no
+   wrapping element around it), so these must match the path directly —
+   not as a "find a descendant path" selector, which would never match.
+   No stroke-dashoffset animation here (same reason as the Classic SVG
+   view): the "flowing" motion instead comes from a .mermaid-flow-dot
+   circle rendered by the edge component, animated via offset-path. */
+.mermaid-rf-edge {
+  fill: none;
+  transition: stroke 0.2s;
+}
+
+.mermaid-rf-edge.mermaid-rf-edge--solid {
+  stroke: #3b82f6;
+  stroke-width: 1.5px;
+}
+
+.mermaid-rf-edge.mermaid-rf-edge--dashed {
+  stroke-dasharray: 10 5;
+  stroke: #8b5cf6;
+  stroke-width: 1.5px;
+}
+
+.mermaid-rf-edge.mermaid-rf-edge--thick {
+  stroke: #10b981;
+  stroke-width: 3px;
+}
+
+/* Dark theme edges */
+[data-theme="dark"] .mermaid-rf-edge.mermaid-rf-edge--solid { stroke: #60a5fa; }
+[data-theme="dark"] .mermaid-rf-edge.mermaid-rf-edge--dashed { stroke: #a78bfa; }
+[data-theme="dark"] .mermaid-rf-edge.mermaid-rf-edge--thick  { stroke: #34d399; }
+
+/* ── Edge Labels ── */
+.mermaid-rf-edge-label {
+  position: absolute;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Custom Nodes ── */
+.mermaid-rf-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  max-width: 200px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  cursor: default;
+  transition: box-shadow 0.2s, transform 0.15s;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #0f172a);
+  border: 1.5px solid var(--border-light, #cbd5e1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.mermaid-rf-node:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+  border-color: #3b82f6;
+}
+
+.mermaid-rf-node--selected {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Shapes */
+.mermaid-rf-node--rectangle {
+  border-radius: 6px;
+}
+
+.mermaid-rf-node--rounded {
+  border-radius: 9999px;
+  padding: 10px 20px;
+}
+
+.mermaid-rf-node--stadium {
+  border-radius: 9999px;
+  padding: 10px 20px;
+  background: #f0f9ff;
+  border-color: #38bdf8;
+}
+
+/* Drawn with an SVG polygon (see MermaidNode) rather than a rotated square:
+   rotating a rectangle 45deg makes its bounding footprint balloon for any
+   label longer than a couple of characters, and forces the label itself
+   to be counter-rotated to stay upright. A polygon stretched to fill the
+   box scales with the text instead and needs no counter-rotation. */
+/* !important: .mermaid-rf-node--selected sets its own border/box-shadow with
+   !important too, and (being declared earlier) would otherwise win the tie
+   and redraw a rectangular card outline around the diamond when selected. */
+.mermaid-rf-node--diamond {
+  position: relative;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 20px 44px;
+  min-width: 140px;
+}
+
+.mermaid-rf-diamond-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.mermaid-rf-diamond-bg polygon {
+  fill: #faf5ff;
+  stroke: #a855f7;
+  stroke-width: 1.5;
+}
+
+[data-theme="dark"] .mermaid-rf-diamond-bg polygon {
+  fill: #1e0f3d;
+  stroke: #a855f7;
+}
+
+.mermaid-rf-node--circle {
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  padding: 8px;
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.mermaid-rf-node--asymmetric {
+  border-radius: 6px 20px 6px 6px;
+  background: #fff7ed;
+  border-color: #f97316;
+}
+
+/* classDiagram — UML-style box: underlined name header, left-aligned members */
+.mermaid-rf-node--classBox {
+  border-radius: 4px;
+  max-width: 260px;
+  padding: 0;
+  text-align: left;
+  display: block;
+}
+
+.mermaid-rf-classbox {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.mermaid-rf-classbox-header {
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 12px;
+  border-bottom: 1.5px solid var(--border-light, #cbd5e1);
+}
+
+.mermaid-rf-classbox-member {
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* stateDiagram [*] pseudostates — small filled/ringed dot, no label text */
+.mermaid-rf-node--stateStart,
+.mermaid-rf-node--stateEnd {
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0;
+  background: #0f172a;
+  border-color: #0f172a;
+}
+
+.mermaid-rf-node--stateEnd {
+  background: transparent;
+  border: 6px solid #0f172a;
+}
+
+[data-theme="dark"] .mermaid-rf-node--stateStart {
+  background: #f1f5f9;
+  border-color: #f1f5f9;
+}
+
+[data-theme="dark"] .mermaid-rf-node--stateEnd {
+  border-color: #f1f5f9;
+}
+
+/* Dark theme nodes */
+[data-theme="dark"] .mermaid-rf-node {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: #334155;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .mermaid-rf-node--stadium {
+  background: #0c2a3d;
+  border-color: #0ea5e9;
+}
+
+[data-theme="dark"] .mermaid-rf-node--circle {
+  background: #052e16;
+  border-color: #22c55e;
+}
+
+[data-theme="dark"] .mermaid-rf-node--asymmetric {
+  background: #1f1008;
+  border-color: #f97316;
+}
+
+/* ── Sequence diagram (Flow mode) ── */
+.mermaid-seq-actor {
+  min-width: 120px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #0f172a);
+  border: 1.5px solid var(--border-light, #cbd5e1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.mermaid-seq-lifeline {
+  width: 0;
+  border-left: 1.5px dashed var(--border-light, #94a3b8);
+}
+
+.mermaid-seq-anchor {
+  width: 1px;
+  height: 1px;
+}
+
+.mermaid-seq-note {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  background: #fef9c3;
+  border: 1px solid #eab308;
+  color: #713f12;
+}
+
+[data-theme="dark"] .mermaid-seq-actor {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .mermaid-seq-note {
+  background: #3f2f0a;
+  border-color: #b45309;
+  color: #fde68a;
+}
+
+.mermaid-seq-activation {
+  width: 14px;
+  border-radius: 2px;
+  background: #93c5fd;
+  border: 1px solid #3b82f6;
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .mermaid-seq-activation {
+  background: #1d4ed8;
+  border-color: #60a5fa;
+}
+
+.mermaid-rf-subgraph {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  border: 1.5px dashed var(--border-light, #94a3b8);
+  background: color-mix(in srgb, var(--bg-tertiary, #f1f5f9) 70%, transparent);
+  pointer-events: none;
+}
+
+.mermaid-rf-subgraph-title {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary, #64748b);
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .mermaid-rf-subgraph {
+  border-color: #475569;
+  background: rgba(30, 41, 59, 0.45);
+}
+
+[data-theme="dark"] .mermaid-rf-subgraph-title {
+  color: #94a3b8;
+}
+
+.mermaid-rf-edge--dotted {
+  stroke-dasharray: 2 4 !important;
+}
+
+.mermaid-rf-fallback-hint {
+  padding: 1rem;
+  font-size: 12px;
+  color: var(--text-secondary, #64748b);
+  text-align: center;
+}
+
+/* ── React Flow panel overrides ── */
+.react-flow__controls {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-light, #e2e8f0);
+}
+
+.react-flow__controls-button {
+  background: var(--bg-primary, #fff);
+  color: var(--text-secondary, #64748b);
+  border-bottom: 1px solid var(--border-light, #e2e8f0);
+  transition: background 0.2s;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-primary, #0f172a);
+}
+
+.react-flow__background {
+  opacity: 0.4;
+}
